@@ -1,0 +1,118 @@
+from pathlib import Path
+import sys
+
+import pytest
+import numpy as np
+import soundfile as sf
+import torch
+from omegaconf import OmegaConf
+
+import inference
+from checkpoint_utils import export_safetensors
+from model_utils import build_model
+from tests.helpers import STEMS, tiny_config
+
+
+@pytest.mark.parametrize("config_exists,checkpoint_exists", [
+    (True, True), (True, False), (False, True), (False, False),
+])
+def test_resolve_downloads_only_missing_files(tmp_path, monkeypatch, config_exists, checkpoint_exists):
+    config = tmp_path / "custom.yaml"
+    checkpoint = tmp_path / "custom.safetensors"
+    for path, exists in ((config, config_exists), (checkpoint, checkpoint_exists)):
+        if exists:
+            path.write_text("local")
+    calls = []
+
+    def download(**kwargs):
+        calls.append(kwargs)
+        return str(tmp_path / "cache" / kwargs["filename"])
+
+    monkeypatch.setattr(inference, "hf_hub_download", download)
+    resolved = inference.resolve_pretrained_paths(
+        config, checkpoint, repo_id="owner/model", revision="commit",
+        cache_dir=tmp_path / "cache", local_files_only=True,
+    )
+    expected_downloads = [
+        filename for filename, exists in (
+            (inference.DEFAULT_CONFIG, config_exists),
+            (inference.DEFAULT_CHECKPOINT, checkpoint_exists),
+        ) if not exists
+    ]
+    assert [call["filename"] for call in calls] == expected_downloads
+    assert all(call["repo_id"] == "owner/model" and call["revision"] == "commit"
+               and call["local_files_only"] and call["cache_dir"] == tmp_path / "cache"
+               for call in calls)
+    assert resolved == (
+        config if config_exists else tmp_path / "cache" / inference.DEFAULT_CONFIG,
+        checkpoint if checkpoint_exists else tmp_path / "cache" / inference.DEFAULT_CHECKPOINT,
+    )
+    for path, exists in ((config, config_exists), (checkpoint, checkpoint_exists)):
+        if exists:
+            assert path.read_text() == "local"
+
+
+def test_default_paths_are_local_first(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    for filename in (inference.DEFAULT_CONFIG, inference.DEFAULT_CHECKPOINT):
+        path = Path(filename)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    monkeypatch.setattr(inference, "hf_hub_download", lambda **kwargs: pytest.fail("Unexpected download"))
+    assert inference.resolve_pretrained_paths() == (
+        Path(inference.DEFAULT_CONFIG), Path(inference.DEFAULT_CHECKPOINT),
+    )
+
+
+def test_directory_is_not_treated_as_missing_file(tmp_path):
+    with pytest.raises(ValueError, match="Expected a file"):
+        inference.resolve_pretrained_paths(tmp_path, None)
+
+
+def test_download_failures_are_not_hidden(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    def download(**kwargs):
+        raise RuntimeError("Authentication required")
+
+    monkeypatch.setattr(inference, "hf_hub_download", download)
+    with pytest.raises(RuntimeError, match="Authentication required"):
+        inference.resolve_pretrained_paths()
+
+
+def test_cli_config_and_checkpoint_are_optional(monkeypatch):
+    calls = []
+    monkeypatch.setattr(inference, "separate_file", lambda *args, **kwargs: calls.append((args, kwargs)) or [])
+    monkeypatch.setattr(sys, "argv", [
+        "inference.py", "--input", "song.wav", "--output_dir", "stems",
+        "--revision", "commit", "--local_files_only",
+    ])
+    inference.main()
+    args, kwargs = calls[0]
+    assert args[:4] == (None, None, "song.wav", "stems")
+    assert kwargs["revision"] == "commit"
+    assert kwargs["local_files_only"]
+
+
+def test_downloaded_artifacts_run_file_inference(tmp_path, monkeypatch):
+    config = tiny_config()
+    config.model.num_stems = 4
+    cached_config = tmp_path / "cached.yaml"
+    OmegaConf.save(config, cached_config)
+    source = tmp_path / "source.pt"
+    torch.save(build_model(config).state_dict(), source)
+    cached_checkpoint = export_safetensors(source, tmp_path / "cached.safetensors")
+    downloads = {
+        inference.DEFAULT_CONFIG: str(cached_config),
+        inference.DEFAULT_CHECKPOINT: str(cached_checkpoint),
+    }
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(inference, "hf_hub_download", lambda **kwargs: downloads[kwargs["filename"]])
+    audio_path = tmp_path / "input.wav"
+    sf.write(audio_path, np.zeros((160, 2), dtype=np.float32), 1600)
+    paths = inference.separate_file(None, None, str(audio_path), str(tmp_path / "output"))
+    assert [path.stem for path in paths] == STEMS
+    for path in paths:
+        audio, sample_rate = sf.read(path)
+        assert audio.shape == (160, 2) and sample_rate == 1600
+        assert np.isfinite(audio).all()
