@@ -7,7 +7,7 @@ checkpoint compatibility.
 
 ## Install
 
-Use Python 3.11 and a PyTorch installation appropriate for your CPU or CUDA
+Use Python 3.11 and a PyTorch installation appropriate for your CPU, CUDA, or Metal
 environment. A source checkout is recommended for access to configs and tests.
 
 ```bash
@@ -54,6 +54,43 @@ uv run python inference.py \
   --device cuda --precision bf16
 ```
 
+### macOS / Apple Silicon (Metal)
+
+Use a native arm64 Python environment on Apple Silicon. Metal inference is
+verified with PyTorch 2.14.0; older PyTorch releases may lack the complex/FFT
+operations this model needs. No FlashAttention or CPU-fallback environment
+variable is needed with the verified version.
+
+```bash
+uv venv --python 3.11
+uv pip install --python .venv/bin/python -e '.[test]' 'torch==2.14.0'
+.venv/bin/python -c 'import torch; print(torch.__version__, torch.backends.mps.is_available())'
+.venv/bin/python inference.py --input song.wav --output_dir outputs/song \
+  --device mps --precision auto
+```
+
+`--device auto` (the CLI default) prefers CUDA, then Metal (`mps`), then CPU.
+`--precision auto` (the default) prefers BF16 when supported, otherwise FP16
+on GPU; CPU retains FP32. Metal BF16 requires macOS 15 or newer.
+Explicit `fp32`, `bf16`, and `fp16` overrides remain available. Inference uses
+autocast rather than converting all model weights or complex DSP to half precision.
+For serving, use `load_separator(device="mps")` or `device="auto"`; its default
+remains CPU. Start with inference batch size 1. The neural network and DSP run
+on Metal; audio decoding, resampling, and overlap-add use CPU arrays.
+
+To prepare the ignored local checkpoint for offline inference:
+
+```bash
+.venv/bin/hf download archimickey/SubRoformer \
+  checkpoints/subroformer_base_4stem_1400000_ema.safetensors \
+  --revision 23497a6972e2b880552a42e10b99893cb3ff205b --local-dir .
+```
+
+Use `--local_files_only` after downloading. Authentication may be required as
+described above. FFmpeg is not needed for WAV inference, but the evaluation
+dependencies imported by the broader test suite need `ffmpeg` and `ffprobe`
+on PATH (`brew install ffmpeg` on macOS).
+
 For CPU, use `--device cpu --precision fp32`. Output is four floating-point
 WAVs: `vocals.wav`, `bass.wav`, `drums.wav`, and `other.wav`, at 48 kHz.
 Input is resampled to the model rate; mono input is duplicated to stereo.
@@ -77,8 +114,10 @@ vocals = stems["vocals"]
 ```
 
 Each value is a CPU float32 array shaped `[channels, samples]`; inputs to
-`separate_audio` must already use the configured sample rate. CUDA callers
-can pass `amp_dtype=torch.bfloat16`. The shared `separate_overlap_add` core
+`separate_audio` must already use the configured sample rate. CUDA and Metal callers
+can pass `amp_dtype=resolve_amp_dtype(next(model.parameters()).device)` after
+importing `resolve_amp_dtype` from `inference` to use the same automatic policy.
+Omitting `amp_dtype` retains FP32 in this low-level API. The shared `separate_overlap_add` core
 lives in `inference.py`; evaluation imports it and adds reference loading and
 SDR scoring. Importing inference does not load evaluation, museval, or Accelerate.
 `load_separator()` uses the same local-first download fallback and accepts

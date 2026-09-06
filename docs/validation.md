@@ -1,5 +1,51 @@
 # Standalone preparation validation
 
+## Apple Silicon / Metal inference
+
+Verified on 2026-09-06 on arm64 macOS 26.6.2 with a fresh project `.venv`,
+Python 3.11.15, and PyTorch 2.14.0. `torch.backends.mps.is_available()` is true.
+FFmpeg 9.0.1 was installed for the broader evaluation/test imports.
+
+- Downloaded the Base four-stem safetensors checkpoint at pinned HF revision
+  `23497a6972e2b880552a42e10b99893cb3ff205b` into ignored `checkpoints/`.
+  SHA-256 matches `c75764944269195db7ff435bfddc3472f569a454ad7e0d0b1f0537983944d228`.
+- Strict checkpoint loading succeeds with 97,234,748 parameters on `mps:0`.
+- Native MPS FP32 inference uses the unchanged model/DSP without enabling
+  `PYTORCH_ENABLE_MPS_FALLBACK`. A real-checkpoint serving call processes a
+  short stereo noise clip using the default 96,000-sample padded window and
+  returns four finite float32 arrays shaped `[2, 4800]`.
+- Offline CLI inference on a short mono tone produces four finite stereo
+  FLOAT WAVs, each 4,800 samples at 48 kHz, under `outputs/mps-smoke/stems/`.
+- Single- and four-stem tiny-model tests compare MPS and CPU output with
+  `rtol=1e-3, atol=1e-5`, including batched overlapping windows and file output.
+  Device-priority and unsupported-precision tests also pass.
+- Full suite: `OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python -m pytest`
+  reports 103 passed, with one third-party audiomentations deprecation warning.
+  `uv pip check --python .venv/bin/python` and `git diff --check` pass.
+
+These are inference smoke checks, not quality/SDR or performance benchmarks.
+MPS training and older PyTorch releases are not validated.
+
+### Mixed-precision follow-up
+
+The inference CLI and `separate_file` now default to `precision="auto"`:
+BF16 when supported, otherwise FP16 on GPU; CPU retains FP32. Both MPS
+BF16 and FP16 pass tiny-model forward checks and real-checkpoint two-second
+smoke checks. Tests observe reduced-precision activations inside the network;
+returned waveforms remain float32. The full suite reports 108 passed.
+
+Full-track MPS BF16 inference on the downloaded MUSDB18-HQ test mixture
+`PR - Oh No` (76.1945 seconds) finishes in 82.30 seconds including loading.
+The existing FP32 results are preserved separately. Scoring the BF16 outputs
+against checksum-verified reference stems with `training_utils.museval_sdr`
+gives vocals -0.0017, bass 0.0004, drums 7.7214, other -1.6113 dB;
+the four-stem mean is 1.5272 dB. This uses the original mixture file, not the
+evaluator's sum of reference stems, and is not a full-test-set benchmark.
+Changing precision does not resolve the low single-track SDR.
+Local outputs and score report: `outputs/musdb18hq-pr-oh-no-bf16/`.
+
+## Original preparation
+
 Initial four-stem-only snapshot validated on 2026-09-06 using Python 3.11.14 and the existing machine's installed
 ML dependencies through a separate virtual environment. This was not a fresh
 download-and-install test of every dependency.

@@ -21,6 +21,40 @@ DEFAULT_CONFIG = "configs/sbroformer_base_4stem.yaml"
 DEFAULT_CHECKPOINT = "checkpoints/subroformer_base_4stem_1400000_ema.safetensors"
 
 
+def resolve_device(device: str | torch.device) -> torch.device:
+    if str(device) == "auto":
+        device = "cuda" if torch.cuda.is_available() else (
+            "mps" if torch.backends.mps.is_available() else "cpu"
+        )
+    device = torch.device(device)
+    if device.type not in {"cpu", "cuda", "mps"}:
+        raise ValueError("device must select auto, cpu, cuda, or mps")
+    if device.type == "mps" and not torch.backends.mps.is_available():
+        raise ValueError("MPS is unavailable; use an MPS-enabled PyTorch on a supported Mac or --device cpu")
+    return device
+
+
+def resolve_amp_dtype(device: torch.device, precision: str = "auto") -> torch.dtype | None:
+    if precision not in {"auto", "fp32", "bf16", "fp16"}:
+        raise ValueError("precision must be auto, fp32, bf16, or fp16")
+    if precision == "fp32":
+        return None
+    if device.type == "cpu":
+        if precision != "auto":
+            raise ValueError("Use fp32 precision on CPU")
+        return None
+    if device.type == "cuda":
+        with torch.cuda.device(device):
+            bf16_supported = torch.cuda.is_bf16_supported()
+    else:
+        bf16_supported = torch.backends.mps.is_macos_or_newer(15, 0)
+    if precision == "auto":
+        return torch.bfloat16 if bf16_supported else torch.float16
+    if precision == "bf16" and not bf16_supported:
+        raise ValueError(f"BF16 is unavailable on {device}; use auto or fp16")
+    return {"bf16": torch.bfloat16, "fp16": torch.float16}[precision]
+
+
 def _resolve_pretrained_file(requested, filename, **download_options) -> Path:
     local_path = Path(requested if requested is not None else filename).expanduser()
     if local_path.is_file():
@@ -95,8 +129,8 @@ def separate_overlap_add(model, audio, segment_samples, hop_length, batch_size, 
     with torch.inference_mode():
         for start in range(0, len(segments), batch_size):
             batch = torch.as_tensor(segments[start:start + batch_size].copy(), device=device)
-            if amp_dtype is not None and device.type == "cuda":
-                with torch.autocast("cuda", dtype=amp_dtype):
+            if amp_dtype is not None and device.type in {"cuda", "mps"}:
+                with torch.autocast(device.type, dtype=amp_dtype):
                     estimate = model(batch)
             else:
                 estimate = model(batch)
@@ -126,6 +160,7 @@ def load_separator(
     local_files_only: bool = False,
 ):
     """Load once for serving; return an eval-mode model and its resolved config."""
+    device = resolve_device(device)
     config_path, checkpoint_path = resolve_pretrained_paths(
         config_path, checkpoint_path, repo_id=repo_id, revision=revision,
         cache_dir=cache_dir, local_files_only=local_files_only,
@@ -176,7 +211,7 @@ def separate_file(
     input_path: str,
     output_dir: str,
     device: str = "cpu",
-    precision: str = "fp32",
+    precision: str = "auto",
     hop_ratio: int = 4,
     batch_size: int = 1,
     *,
@@ -185,6 +220,8 @@ def separate_file(
     cache_dir: str | Path | None = None,
     local_files_only: bool = False,
 ) -> list[Path]:
+    requested_device = resolve_device(device)
+    amp_dtype = resolve_amp_dtype(requested_device, precision)
     config_path = _resolve_pretrained_file(
         config_path, DEFAULT_CONFIG, repo_id=repo_id, revision=revision,
         cache_dir=cache_dir, local_files_only=local_files_only,
@@ -195,13 +232,6 @@ def separate_file(
         raise ValueError("hop_ratio must be between 1 and audio.chunk_size")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
-    requested_device = torch.device(device)
-    if requested_device.type not in {"cpu", "cuda"}:
-        raise ValueError("device must select cpu or cuda")
-    if precision not in {"fp32", "bf16", "fp16"}:
-        raise ValueError("precision must be fp32, bf16, or fp16")
-    if requested_device.type == "cpu" and precision != "fp32":
-        raise ValueError("Use fp32 precision on CPU")
 
     sample_rate = int(config.audio.sample_rate)
     audio = load_audio(Path(input_path), sample_rate)
@@ -232,7 +262,6 @@ def separate_file(
     model = build_model(config)
     load_model_checkpoint(model, checkpoint_path)
     model.to(requested_device)
-    amp_dtype = {"fp32": None, "bf16": torch.bfloat16, "fp16": torch.float16}[precision]
     estimates = separate_audio(
         model, audio, config, hop_ratio, batch_size, amp_dtype
     )
@@ -252,8 +281,9 @@ def main() -> None:
     parser.add_argument("--local_files_only", action="store_true", help="Use local files/cache without network")
     parser.add_argument("--input", required=True)
     parser.add_argument("--output_dir", required=True)
-    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    parser.add_argument("--precision", choices=["fp32", "bf16", "fp16"], default="fp32")
+    parser.add_argument("--device", default="auto", help="auto (CUDA, then MPS, then CPU), cpu, cuda[:N], or mps")
+    parser.add_argument("--precision", choices=["auto", "fp32", "bf16", "fp16"], default="auto",
+                        help="auto prefers BF16, then FP16 on GPU; CPU uses FP32")
     parser.add_argument("--hop_ratio", type=int, default=4)
     parser.add_argument("--batch_size", type=int, default=1)
     args = parser.parse_args()
