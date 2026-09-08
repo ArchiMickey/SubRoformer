@@ -1,0 +1,235 @@
+{
+  "started_at_utc": "2026-09-07T22:43:13.485965+00:00",
+  "level": 3,
+  "merged_model": true,
+  "optimization": "Cache analysis and synthesis filter FFTs",
+  "cumulative_steps": [
+    "Validate fixed filters once instead of every band group",
+    "Reuse the analysis input FFT across band groups",
+    "Cache analysis and synthesis filter FFTs"
+  ],
+  "torch_version": "2.14.0",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "hardware": "Apple M5 Pro",
+  "threads": 4,
+  "warmup": 2,
+  "repeats": 7,
+  "seed": 20260907,
+  "config": "/Users/archimickey/Projects/SubRoformer/configs/sbroformer_base_4stem.yaml",
+  "config_sha256": "f0523d18524f97d71071a33097d186b25becb5ddf87ebc11c1fa27135db6bc57",
+  "checkpoint": "/Users/archimickey/Projects/SubRoformer/checkpoints/subroformer_base_4stem_1400000_ema.safetensors",
+  "checkpoint_sha256": "c75764944269195db7ff435bfddc3472f569a454ad7e0d0b1f0537983944d228",
+  "original_source_sha256": {
+    "model.py": "b9a004f8377e8ef7a4f73a497ae8eaeace269b8e0965a6f59491b2ea9f624db7",
+    "inference.py": "338a190085cc942bc041de87bfa5c5e42ded485a0f108caf052823a462983cfc",
+    "model_utils.py": "f81fa257b641ecd205d562baf81674890ba963ddb90f9d9a1daf0125beffd46b",
+    "dsp/__init__.py": "200cfce3fd0b6b6b2e2b58f44794475f79b03f304d1d73de97b5e2668279878f",
+    "dsp/analytic.py": "5df7eb1c780e2ed4b5c9bb71faee50bcbfa196fa9fdd250c4cc541bb59c0a738",
+    "dsp/banks.py": "0d3fa669d86c63629d3f618683ca5b9935bc6952c11eeee6c83771669928e3a0",
+    "dsp/convolve.py": "78a58156d335f7cf491808bf1dc9008fd690dc401e85833947bc99c949d8595e",
+    "dsp/inference_optimized.py": "9d69092fb2df94bf82c1b52ffdb3ccfed77194439b7375590ccfdc4eac2655f2",
+    "dsp/overlap_add.py": "0a3d9024bffea8c372f28c88fe00a4a62ba25c94b6f5dba2a11b33e023a35953",
+    "dsp/subband_fast_triangle.py": "fa48843de75b91a9cf4e0cf5e23f93374492a2eca0ec8cb6a3e2d433da1c74e0",
+    "dsp/upsample.py": "c376b417a875008d70948d4de3febebc5f8b88b704b30bfd2185331af80cc6dd",
+    "dsp/utils.py": "80d93138ce7b8db2c499061bae09d40bdfa48c91fa7e19656dcd5f91cadfa0ac"
+  },
+  "optimized_source_sha256": "ccc8d00bb0f6a81382056e2b1c01e7a10d9e2cc535716e55c1c7c567c1468769",
+  "reference_builder_sha256": "79c27fc43909b33af973f9a7518be6a6e28562a6e2ce33677e1d59a7319da66f",
+  "benchmark_source_sha256": "1b85b4d80a760e93e15a6d702047a53b4fcd03b4c0baec855acae469fdd731a2",
+  "devices": [
+    {
+      "device": "cpu",
+      "precision": "fp32",
+      "input_shape": [
+        1,
+        2,
+        96000
+      ],
+      "cold_s": {
+        "baseline": 3.3881711669964716,
+        "optimized": 3.270424040965736
+      },
+      "timings_s": {
+        "baseline": [
+          3.3383420830359682,
+          3.085136582958512,
+          3.134147542063147,
+          3.135497583076358,
+          3.202393417013809,
+          3.2193797499639913,
+          3.1460174579406157
+        ],
+        "optimized": [
+          3.067377833998762,
+          2.9683899160008878,
+          3.0019856669241562,
+          3.196096666972153,
+          3.0760749169858173,
+          3.059163208003156,
+          3.1541619999334216
+        ]
+      },
+      "baseline": {
+        "median_s": 3.1460174579406157,
+        "min_s": 3.085136582958512,
+        "max_s": 3.3383420830359682
+      },
+      "optimized": {
+        "median_s": 3.067377833998762,
+        "min_s": 2.9683899160008878,
+        "max_s": 3.196096666972153
+      },
+      "speedup": 1.0256374102564783,
+      "latency_reduction_pct": 2.499656311294951,
+      "baseline_repeatable": true,
+      "bitwise_equal": true,
+      "finite": true,
+      "max_abs_error": 0.0,
+      "rms_error": 0.0,
+      "paired_latency_reduction_pct": 3.944502863292243,
+      "previous": {
+        "median_s": 3.1460174579406157,
+        "min_s": 3.085136582958512,
+        "max_s": 3.3383420830359682
+      },
+      "incremental_latency_reduction_pct": 3.944502863292243,
+      "cache_bytes": 148258080,
+      "verification_probes": [
+        {
+          "name": "silence",
+          "input_shape": [
+            1,
+            2,
+            96000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "tones",
+          "input_shape": [
+            2,
+            2,
+            12347
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "noise",
+          "input_shape": [
+            1,
+            2,
+            48000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        }
+      ]
+    },
+    {
+      "device": "mps",
+      "precision": "autocast_fp16_fp32_weights",
+      "input_shape": [
+        1,
+        2,
+        96000
+      ],
+      "cold_s": {
+        "baseline": 1.3297119999770075,
+        "optimized": 0.7357035829918459
+      },
+      "timings_s": {
+        "baseline": [
+          0.688196541974321,
+          0.68347820895724,
+          0.6868994999676943,
+          0.7026897920295596,
+          0.6647888750303537,
+          0.6964187080739066,
+          0.6789404170121998
+        ],
+        "optimized": [
+          0.6547798750689253,
+          0.6507806250592694,
+          0.6642421669093892,
+          0.6479941249126568,
+          0.6898387499386445,
+          0.6738577079959214,
+          0.6427899579284713
+        ]
+      },
+      "baseline": {
+        "median_s": 0.6868994999676943,
+        "min_s": 0.6647888750303537,
+        "max_s": 0.7026897920295596
+      },
+      "optimized": {
+        "median_s": 0.6547798750689253,
+        "min_s": 0.6427899579284713,
+        "max_s": 0.6898387499386445
+      },
+      "speedup": 1.049054080801411,
+      "latency_reduction_pct": 4.6760297394712875,
+      "baseline_repeatable": true,
+      "bitwise_equal": true,
+      "finite": true,
+      "max_abs_error": 0.0,
+      "rms_error": 0.0,
+      "paired_latency_reduction_pct": 4.7839980074648185,
+      "previous": {
+        "median_s": 0.6868994999676943,
+        "min_s": 0.6647888750303537,
+        "max_s": 0.7026897920295596
+      },
+      "incremental_latency_reduction_pct": 4.7839980074648185,
+      "cache_bytes": 148258080,
+      "verification_probes": [
+        {
+          "name": "silence",
+          "input_shape": [
+            1,
+            2,
+            96000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "tones",
+          "input_shape": [
+            2,
+            2,
+            12347
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "noise",
+          "input_shape": [
+            1,
+            2,
+            48000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        }
+      ]
+    }
+  ],
+  "original_sources_unchanged": true,
+  "completed_at_utc": "2026-09-07T22:44:39.339960+00:00"
+}
