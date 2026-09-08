@@ -20,6 +20,13 @@ repository, private data adapter, or local dataset mount is required.
 
 ## Inference
 
+CLI and in-app file inference stream finalized float32 WAV samples using a
+bounded overlap-add buffer. Input decoding still holds the input waveform in
+memory. The Python API returns full arrays by default; callers can instead use
+`separate_audio(..., on_chunk=callback, collect_output=False)` to consume named
+chunks without retaining full outputs. The callback receives
+`(start_sample, {stem: channels_by_samples_array})`.
+
 Run inference with automatic Hugging Face fallback:
 
 ```bash
@@ -28,7 +35,7 @@ uv run python inference.py --input song.wav --output_dir outputs/song \
 ```
 
 The script uses existing `configs/sbroformer_base_4stem.yaml` and
-`checkpoints/subroformer_base_4stem_1400000_ema.safetensors` relative to the
+`checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors` relative to the
 working directory first. Each missing artifact is downloaded separately from
 [`archimickey/SubRoformer`](https://huggingface.co/archimickey/SubRoformer)
 into the Hugging Face cache. Explicit `--config` / `--checkpoint` paths also
@@ -38,8 +45,9 @@ files raise a load error rather than being replaced.
 
 Use `--cache_dir` to choose the cache, `--revision` to select a commit/tag,
 and `--local_files_only` for offline local/cache-only loading. The repository
-is currently private, so authenticate with `hf auth login` or set `HF_TOKEN`
-to an authorized token. The weights and matching config are available at
+is public; complete anonymous config/checkpoint downloads were verified on
+2026-09-06 without `HF_TOKEN` or a cached login. Private/gated repositories require
+an authorized token via `hf auth login` or `HF_TOKEN`. The artifacts are available at
 revision `23497a6972e2b880552a42e10b99893cb3ff205b`; use `--revision` with
 that commit for a pinned download.
 
@@ -70,8 +78,10 @@ uv pip install --python .venv/bin/python -e '.[test]' 'torch==2.14.0'
 ```
 
 `--device auto` (the CLI default) prefers CUDA, then Metal (`mps`), then CPU.
-`--precision auto` (the default) prefers BF16 when supported, otherwise FP16
-on GPU; CPU retains FP32. Metal BF16 requires macOS 15 or newer.
+`--precision auto` (the default) uses FP16 on Metal/MPS, prefers BF16 when
+supported on CUDA (otherwise FP16), and retains FP32 on CPU.
+PyTorch is the default backend; Core ML requires `--backend coreml`.
+Explicit Metal BF16 requires macOS 15 or newer.
 Explicit `fp32`, `bf16`, and `fp16` overrides remain available. Inference uses
 autocast rather than converting all model weights or complex DSP to half precision.
 For serving, use `load_separator(device="mps")` or `device="auto"`; its default
@@ -133,6 +143,13 @@ uv run python -m checkpoint_utils --checkpoint model.pt --output model.safetenso
 
 Export preserves tensor values and dtypes; optimizer state is excluded. Keep
 the matching YAML config with the weights. Safetensors exports are ignored by Git.
+
+Add `--fp16` to convert floating tensors to FP16 while preserving non-floating
+tensors and provenance metadata. The default download is the FP16 Base copy;
+the original FP32 checkpoint remains available by explicit path. The desktop
+app preserves checkpoint precision (`load_separator(..., preserve_dtype=True)`)
+and has no precision override. The CLI retains its independent `--precision`
+autocast policy and FP32 model loading.
 
 ## Training
 
