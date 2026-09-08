@@ -450,3 +450,382 @@ def test_worker_real_inference_and_export(application, tmp_path, monkeypatch, co
         if stem == NULL_KEY:
             actual_null[:, first:first + values.shape[1]] = values
     np.testing.assert_allclose(actual_null, expected_null.values, atol=1e-3)
+
+
+def test_click_maps_zoomed_spectrogram_time(application, monkeypatch):
+    window = MainWindow()
+    window.prepare(np.full((513, 30), -20, dtype=np.float32), 1600, 16000, ["vocals"])
+    window.show()
+    application.processEvents()
+    card = window.cards["vocals"]
+    view = card.plot.getViewBox()
+    view.setRange(xRange=(2, 6), padding=0)
+    requested = []
+    card.seek_requested.connect(lambda stem, seconds: requested.append((stem, seconds)))
+
+    class Click:
+        def button(self):
+            return Qt.MouseButton.LeftButton
+
+        def scenePos(self):
+            return view.mapViewToScene(QPointF(3.5, 400))
+
+    card.clicked(Click())
+    assert requested[0][0] == "vocals"
+    assert requested[0][1] == pytest.approx(3.5)
+    assert window.player.position == 0 and not window.player.playing
+    assert not window.pause_playback.isEnabled()
+    window.receive_audio(MIXTURE_KEY, 0, np.zeros((2, 1600), dtype=np.float32))
+    assert window.pause_playback.isEnabled()
+    window.close()
+
+
+def test_progress_eta_and_terminal_states(application):
+    window = MainWindow()
+    window.update_phase("Separating")
+    assert "estimating" in window.timing_status.text()
+    window.update_timing(12, 28)
+    assert window.timing_status.text() == "Elapsed 00:12 · ETA 00:28"
+    for phase in ["Cancelled", "Failed", "Saving stems", "Complete"]:
+        window.update_phase(phase)
+        assert phase in window.timing_status.text()
+        assert "ETA —" in window.timing_status.text()
+    window.close()
+
+
+@pytest.mark.parametrize("rtf,description", [(0.5, "real-time or faster"), (1.0, "real-time or faster"), (1.2, "slower than real-time")])
+def test_rtf_status_reports_throughput(application, rtf, description):
+    window = MainWindow()
+    assert window.rtf_status.text() == "RTF —"
+    window.update_phase("Separating")
+    window.update_rtf(rtf)
+    assert window.rtf_status.text() == f"RTF (so far) {rtf:.3f} · {description}"
+    window.update_phase("Cancelled")
+    assert "so far" in window.rtf_status.text()
+    window.update_phase("Complete")
+    assert window.rtf_status.text() == f"RTF {rtf:.3f} · {description}"
+    window.separation_rtf = None
+    window.update_phase("Loading / preparing")
+    assert window.rtf_status.text() == "RTF —"
+    window.close()
+
+
+def test_stem_tabs_mix_and_spectrograms_only_seek(application, monkeypatch):
+    from app.tests.test_player import FakeSink
+
+    window = MainWindow()
+    try:
+        stems = ["vocals", "bass", "drums", "other"]
+        window.prepare(np.full((513, 30), -20, dtype=np.float32), 1000, 4000, stems)
+        window.receive_audio(MIXTURE_KEY, 0, np.full((2, 4000), .8, dtype=np.float32))
+        for stem in stems:
+            window.receive_audio(stem, 0, np.full((2, 4000), .1, dtype=np.float32))
+        monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
+        assert all(button.isChecked() for button in window.stem_buttons.values())
+        window.stem_buttons[MIXTURE_KEY].click()
+        assert all(button.isChecked() for button in window.stem_buttons.values())
+        window.player.seek_time(.5)
+        np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32), .8)
+        window.stem_buttons["vocals"].click()
+        assert not window.stem_buttons[MIXTURE_KEY].isChecked()
+        assert not window.stem_buttons["vocals"].isChecked()
+        assert window.stem_buttons[NULL_KEY].isChecked()
+        assert set(window.player.selected) == {"bass", "drums", "other", NULL_KEY}
+        assert window.player.playing and window.player.position == 500
+        np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32), .7, atol=1e-6)
+        selected = window.player.selected
+        window.cards["vocals"].seek_requested.emit("vocals", 1.5)
+        assert window.player.selected == selected and window.player.position == 1500
+        window.cards[NULL_KEY].seek_requested.emit("Null", 1.5)
+        assert window.player.selected == selected and window.player.position == 1500
+        window.stem_buttons["vocals"].click()
+        assert all(button.isChecked() for button in window.stem_buttons.values())
+        for stem in [*stems, NULL_KEY]:
+            window.stem_buttons[stem].click()
+        assert not window.player.selected and window.player.playing
+        window.player.pause()
+        window.stem_buttons[MIXTURE_KEY].click()
+        assert all(button.isChecked() for button in window.stem_buttons.values())
+        assert not window.player.playing and window.player.position == 1500
+        window.toggle_playback()
+        assert window.player.playing
+        sink = window.player.sink
+        window.mute_all.click()
+        assert not window.player.selected and window.player.playing
+        assert window.player.position == 1500 and sink.disposed
+        np.testing.assert_array_equal(np.frombuffer(window.player.sink.writes, dtype=np.float32), 0)
+        window.player.sink.processed = 100000
+        window.player.tick()
+        assert window.player.position == 1600
+        assert "Playing silently" in window.playback_status.text()
+        assert window.pause_playback.text() == "Pause"
+        assert not any(button.isChecked() for button in window.stem_buttons.values())
+        assert not window.mute_all.isEnabled()
+        window.stem_buttons[MIXTURE_KEY].click()
+        assert window.mute_all.isEnabled()
+        assert window.player.position == 1600 and window.player.playing
+        window.player.pause()
+        window.mute_all.click()
+        assert not window.player.playing and window.player.position == 1600
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("device", ["cuda", "mps", "cpu"])
+def test_app_defaults_prefer_accelerator_and_fp16(application, monkeypatch, device):
+    monkeypatch.setattr("app.gui.resolve_device", lambda requested: torch.device(device))
+    window = MainWindow()
+    try:
+        assert window.device.currentText() == device
+        assert not window.mute_all.isEnabled()
+        assert window.memory_monitor.requested == device
+        assert window.precision.text() == "Not loaded"
+        assert not window.controls.isAncestorOf(window.precision)
+        assert window.precision.parentWidget().objectName() == "infoMetric"
+    finally:
+        window.close()
+
+
+@pytest.mark.parametrize("dtype,expected", [(torch.float16, "FP16"), (torch.float32, "FP32"), (torch.bfloat16, "BF16")])
+def test_worker_precision_follows_checkpoint(monkeypatch, dtype, expected):
+    calls = []
+    precisions = []
+    monkeypatch.setattr("app.gui.use_coreml", lambda *args: False)
+    monkeypatch.setattr("app.gui.resolve_device", lambda requested: torch.device("cpu"))
+    monkeypatch.setattr("app.gui.resolve_pretrained_paths", lambda *args, **kwargs: ("config.yaml", "checkpoint.pt"))
+
+    def load(*args, **kwargs):
+        assert kwargs["preserve_dtype"] is True
+        return build_model(tiny_config()).to(dtype), tiny_config()
+
+    def stop_at_audio(*args):
+        raise RuntimeError("stop before audio")
+
+    monkeypatch.setattr("app.gui.load_separator", load)
+    monkeypatch.setattr("app.gui.load_audio", stop_at_audio)
+    worker = InferenceWorker({"config": "", "checkpoint": "", "device": "auto", "offline": True, "input": "song.wav"})
+    worker.status.connect(calls.append)
+    worker.precision_changed.connect(precisions.append)
+    with pytest.raises(RuntimeError, match="stop before audio"):
+        worker.process()
+    assert f"cpu · {expected}" in calls[-1]
+    assert precisions == [f"PyTorch · {expected}"]
+
+
+def test_worker_automatically_loads_coreml(monkeypatch):
+    calls = []
+    precisions = []
+    monkeypatch.setattr("app.gui.use_coreml", lambda *args: True)
+    monkeypatch.setattr("app.gui.resolve_pretrained_paths", lambda *args, **kwargs: pytest.fail("PyTorch download"))
+
+    def load(**kwargs):
+        assert kwargs["local_files_only"] is True
+        assert callable(kwargs["download_progress"])
+        return build_model(tiny_config()), tiny_config()
+
+    def stop_at_audio(*args):
+        raise RuntimeError("stop before audio")
+
+    monkeypatch.setattr("app.gui.load_coreml_separator", load)
+    monkeypatch.setattr("app.gui.load_audio", stop_at_audio)
+    worker = InferenceWorker({"config": "", "checkpoint": "", "device": "auto", "offline": True, "input": "song.wav"})
+    worker.status.connect(calls.append)
+    worker.precision_changed.connect(precisions.append)
+    with pytest.raises(RuntimeError, match="stop before audio"):
+        worker.process()
+    assert "Core ML · FP16" in calls[-1]
+    assert precisions == ["Core ML · FP16"]
+
+
+def test_precision_info_persists_and_resets(application, monkeypatch):
+    monkeypatch.setattr(InferenceWorker, "start", lambda self: None)
+    window = MainWindow()
+    try:
+        window.launch({"input": "song.wav"})
+        assert window.precision.text() == "Loading…"
+        window.worker.precision_changed.emit("Core ML · FP16")
+        window.worker.status.emit("Separating…")
+        window.update_phase("Complete")
+        assert window.precision.text() == "Core ML · FP16"
+        window.worker.finished.emit()
+        window.launch({"input": "other.wav", "preview": True})
+        assert window.precision.text() == "Not loaded"
+    finally:
+        if window.worker is not None:
+            window.worker.finished.emit()
+        window.close()
+
+
+def test_precision_card_visible_in_info_pane(application):
+    window = MainWindow()
+    try:
+        window.precision.setText("Core ML · FP16")
+        window.show()
+        application.processEvents()
+        assert window.precision.visibleRegion().boundingRect().height() == window.precision.height()
+    finally:
+        window.close()
+
+
+def test_artifact_progress_bar_and_separation_reset(application):
+    window = MainWindow()
+    try:
+        window.update_artifact_progress("checkpoints/model.safetensors", 0, None)
+        assert window.progress.maximum() == 0
+        assert "model.safetensors" in window.status.text()
+        window.update_artifact_progress("checkpoints/model.safetensors", 4_000_000_000, 8_000_000_000)
+        assert window.progress.maximum() == 100 and window.progress.value() == 50
+        assert "4000.00 / 8000.00 MB" in window.status.text()
+        window.update_artifact_progress("checkpoints/model.safetensors", 8_000_000_000, 8_000_000_000)
+        assert window.progress.value() == 100
+        window.update_phase("Loading model")
+        assert window.progress.maximum() == 0
+        window.prepare(np.full((513, 30), -90, dtype=np.float32), 1600, 1600, ["vocals"])
+        assert window.progress.maximum() == 100 and window.progress.value() == 0
+        assert window.progress.format() == "Separation · %p%"
+    finally:
+        window.close()
+
+
+def test_mixture_preview_emits_audio_and_click_plays(application, tmp_path, monkeypatch):
+    from app.tests.test_player import FakeSink
+
+    source = tmp_path / "preview.wav"
+    sf.write(source, np.full((4000, 2), .1, dtype=np.float32), 1600)
+    worker = InferenceWorker({"preview": True, "input": str(source)})
+    window = MainWindow()
+    worker.prepared.connect(window.prepare)
+    worker.audio_ready.connect(window.receive_audio)
+    worker.process()
+    assert window.player.buffers[MIXTURE_KEY].frames == 4000
+    monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
+    window.cards[MIXTURE_KEY].seek_requested.emit("Input mixture", 1.0)
+    assert window.player.stem == MIXTURE_KEY and window.player.playing
+    assert window.player.position == 1600
+    assert "Mixture" in window.playback_status.text()
+    window.toggle_playback()
+    assert not window.player.playing
+    window.close()
+
+
+@pytest.mark.parametrize("close_window", [False, True])
+def test_launch_backpressures_audio_and_cancels_without_deadlock(application, monkeypatch, close_window):
+    window = MainWindow()
+    delivered = []
+    acknowledged = []
+    append = window.player.append
+
+    def receive(stem, start, audio):
+        append(stem, start, audio)
+        delivered.append(start)
+        if len(delivered) == 2:
+            if close_window:
+                window.close()
+            else:
+                window.cancel.click()
+            assert window.isVisible()
+
+    def process(worker):
+        worker.prepared.emit(np.full((513, 4), -90, dtype=np.float32), 1000, 320, [])
+        for start in range(0, 320, 32):
+            worker.check_cancel()
+            worker.audio_ready.emit(MIXTURE_KEY, start, np.zeros((2, 32), dtype=np.float32))
+            acknowledged.append(len(delivered))
+
+    monkeypatch.setattr(window.player, "append", receive)
+    monkeypatch.setattr(InferenceWorker, "process", process)
+    window.show()
+    window.launch({"preview": True})
+    worker = window.worker
+    loop = QEventLoop()
+    worker.finished.connect(loop.quit)
+    QTimer.singleShot(5000, loop.quit)
+    loop.exec()
+    try:
+        assert not worker.isRunning()
+        assert delivered == [0, 32]
+        assert acknowledged == [1, 2]
+        application.processEvents()
+        assert window.worker is None
+        assert window.isVisible() is not close_window
+        assert window.memory_monitor.isRunning() is not close_window
+    finally:
+        window.close()
+
+
+def test_cancelled_export_is_closed_and_not_reported_complete(application, tmp_path, monkeypatch):
+    import app.gui as gui
+
+    config = tiny_config()
+    config.model.num_stems = 4
+    model = build_model(config).eval()
+    monkeypatch.setattr(gui, "resolve_pretrained_paths", lambda *args, **kwargs: ("config", "checkpoint"))
+    monkeypatch.setattr(gui, "load_separator", lambda *args, **kwargs: (model, config))
+    monkeypatch.setattr(gui, "load_audio", lambda *args: np.zeros((2, 400), dtype=np.float32))
+    worker = InferenceWorker({
+        "config": "", "checkpoint": "", "device": "cpu", "offline": True,
+        "input": "unused.wav", "output": str(tmp_path), "batch": 1, "overlap": 4,
+    })
+    completed, failures, phases = [], [], []
+    worker.completed.connect(completed.append)
+    worker.failed.connect(failures.append)
+    worker.phase_changed.connect(phases.append)
+    worker.audio_ready.connect(
+        lambda stem, start, audio: worker.requestInterruption() if stem != MIXTURE_KEY else None,
+        Qt.ConnectionType.DirectConnection,
+    )
+    loop = QEventLoop()
+    worker.finished.connect(loop.quit)
+    worker.start()
+    loop.exec()
+    worker.wait()
+    assert not completed and not failures and phases[-1] == "Cancelled"
+    paths = list(tmp_path.glob("*/*.wav"))
+    assert len(paths) == 4
+    for path in paths:
+        assert sf.info(path).frames == 32
+        path.unlink()
+
+
+def test_playback_storage_failure_requests_cancellation(application, monkeypatch):
+    window = MainWindow()
+    errors, cancellations = [], []
+
+    def fail(*args):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(window.player, "append", fail)
+    monkeypatch.setattr(window, "stop", lambda: cancellations.append(True))
+    monkeypatch.setattr(window, "playback_error", errors.append)
+    try:
+        window.receive_audio(MIXTURE_KEY, 0, np.zeros((2, 32), dtype=np.float32))
+        assert cancellations == [True]
+        assert errors == ["Unable to store playback audio: disk full"]
+    finally:
+        window.close()
+
+
+def test_fit_all_keeps_every_card_visible_and_preserves_data(application):
+    window = MainWindow()
+    mixture = np.full((513, 30), -20, dtype=np.float32)
+    window.prepare(mixture, 1600, 16000, ["vocals", "bass", "drums", "other"])
+    cards = dict(window.cards)
+    window.show()
+    for mode in ["Grid", "Fit all", "Stacked", "Fit all"]:
+        window.spectrogram_layout.setCurrentText(mode)
+        application.processEvents()
+        assert window.cards == cards
+        assert window.plots.count() == 6
+        np.testing.assert_array_equal(window.cards[MIXTURE_KEY].values, mixture)
+        if mode == "Fit all":
+            viewport = window.spectrogram_scroll.viewport()
+            assert window.spectrogram_scroll.verticalScrollBar().maximum() == 0
+            for card in window.cards.values():
+                top_left = card.mapTo(viewport, card.rect().topLeft())
+                bottom_right = card.mapTo(viewport, card.rect().bottomRight())
+                assert viewport.rect().contains(top_left)
+                assert viewport.rect().contains(bottom_right)
+    window.resize(1100, 720)
+    application.processEvents()
+    assert window.spectrogram_scroll.verticalScrollBar().maximum() == 0
+    window.close()
