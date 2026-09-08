@@ -1,0 +1,276 @@
+{
+  "started_at_utc": "2026-09-07T22:14:24.703211+00:00",
+  "level": 3,
+  "optimization": "Cache analysis and synthesis filter FFTs",
+  "cumulative_steps": [
+    "Validate fixed filters once instead of every band group",
+    "Reuse the analysis input FFT across band groups",
+    "Cache analysis and synthesis filter FFTs"
+  ],
+  "torch_version": "2.14.0",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "hardware": "Apple M5 Pro",
+  "threads": 4,
+  "warmup": 2,
+  "repeats": 11,
+  "seed": 20260907,
+  "config": "configs/sbroformer_base_4stem.yaml",
+  "config_sha256": "f0523d18524f97d71071a33097d186b25becb5ddf87ebc11c1fa27135db6bc57",
+  "checkpoint": "checkpoints/subroformer_base_4stem_1400000_ema.safetensors",
+  "checkpoint_sha256": "c75764944269195db7ff435bfddc3472f569a454ad7e0d0b1f0537983944d228",
+  "original_source_sha256": {
+    "model.py": "112f0a2c65ec72d940407d896c762d03386f954a4a71818738030661a065577c",
+    "inference.py": "338a190085cc942bc041de87bfa5c5e42ded485a0f108caf052823a462983cfc",
+    "model_utils.py": "f81fa257b641ecd205d562baf81674890ba963ddb90f9d9a1daf0125beffd46b",
+    "dsp/__init__.py": "200cfce3fd0b6b6b2e2b58f44794475f79b03f304d1d73de97b5e2668279878f",
+    "dsp/analytic.py": "5df7eb1c780e2ed4b5c9bb71faee50bcbfa196fa9fdd250c4cc541bb59c0a738",
+    "dsp/banks.py": "0d3fa669d86c63629d3f618683ca5b9935bc6952c11eeee6c83771669928e3a0",
+    "dsp/convolve.py": "78a58156d335f7cf491808bf1dc9008fd690dc401e85833947bc99c949d8595e",
+    "dsp/overlap_add.py": "0a3d9024bffea8c372f28c88fe00a4a62ba25c94b6f5dba2a11b33e023a35953",
+    "dsp/subband_fast_triangle.py": "fa48843de75b91a9cf4e0cf5e23f93374492a2eca0ec8cb6a3e2d433da1c74e0",
+    "dsp/upsample.py": "c376b417a875008d70948d4de3febebc5f8b88b704b30bfd2185331af80cc6dd",
+    "dsp/utils.py": "80d93138ce7b8db2c499061bae09d40bdfa48c91fa7e19656dcd5f91cadfa0ac"
+  },
+  "optimized_source_sha256": "a786c4f08aefd95bf7e6a4e54f9a954ee2b234ab9e3771b177a9228e3b8f828c",
+  "benchmark_source_sha256": "57ff35fd9464199bd7b2c500355e447c07ab0e30d27d9cb42444bbc3d4bc816e",
+  "devices": [
+    {
+      "device": "cpu",
+      "precision": "fp32",
+      "input_shape": [
+        1,
+        2,
+        96000
+      ],
+      "cold_s": {
+        "baseline": 3.143856875016354,
+        "previous": 3.085613915929571,
+        "optimized": 3.0863616669084877
+      },
+      "timings_s": {
+        "baseline": [
+          3.119277041987516,
+          3.1240950420033187,
+          3.212775457999669,
+          3.1931843330385163,
+          3.2518405419541523,
+          3.2341422920580953,
+          3.2932932920521125,
+          3.261862999992445,
+          3.273283209069632,
+          3.2733023749897256,
+          3.3031001669587567
+        ],
+        "optimized": [
+          3.005776416976005,
+          3.052869000006467,
+          3.021773040993139,
+          3.1228354999329895,
+          3.1062303750077263,
+          3.161425542086363,
+          3.1744940830394626,
+          3.1656380830099806,
+          3.1974597909720615,
+          3.1726326249772683,
+          3.1686337089631706
+        ],
+        "previous": [
+          3.1325937500223517,
+          3.1241504580248147,
+          3.1185389169258997,
+          3.1993787500541657,
+          3.2164001249475405,
+          3.2653853750089183,
+          3.259433540981263,
+          3.2728726249188185,
+          3.3618999579921365,
+          3.2883805830497295,
+          3.3249712079996243
+        ]
+      },
+      "baseline": {
+        "median_s": 3.2518405419541523,
+        "min_s": 3.119277041987516,
+        "max_s": 3.3031001669587567
+      },
+      "optimized": {
+        "median_s": 3.161425542086363,
+        "min_s": 3.005776416976005,
+        "max_s": 3.1974597909720615
+      },
+      "speedup": 1.0285994399248513,
+      "latency_reduction_pct": 2.780425383756846,
+      "baseline_repeatable": true,
+      "bitwise_equal": true,
+      "finite": true,
+      "max_abs_error": 0.0,
+      "rms_error": 0.0,
+      "paired_latency_reduction_pct": 3.0754796984734267,
+      "previous": {
+        "median_s": 3.259433540981263,
+        "min_s": 3.1185389169258997,
+        "max_s": 3.3618999579921365
+      },
+      "incremental_latency_reduction_pct": 3.2764654845526597,
+      "cache_bytes": 148258080,
+      "verification_probes": [
+        {
+          "name": "silence",
+          "input_shape": [
+            1,
+            2,
+            96000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "tones",
+          "input_shape": [
+            2,
+            2,
+            12347
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "noise",
+          "input_shape": [
+            1,
+            2,
+            48000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        }
+      ]
+    },
+    {
+      "device": "mps",
+      "precision": "autocast_fp16_fp32_weights",
+      "input_shape": [
+        1,
+        2,
+        96000
+      ],
+      "cold_s": {
+        "baseline": 1.3190777910640463,
+        "previous": 0.8995569170219824,
+        "optimized": 0.9360505839576945
+      },
+      "timings_s": {
+        "baseline": [
+          0.9370915839681402,
+          0.947935999953188,
+          0.9125655830139294,
+          0.9344171669799834,
+          0.9371106249745935,
+          0.9310731660807505,
+          0.9312069580191746,
+          0.9270986668998376,
+          1.0023900830419734,
+          0.9628481249092147,
+          0.9361023750388995
+        ],
+        "optimized": [
+          0.8918099579168484,
+          0.8867608329746872,
+          0.8917564579751343,
+          0.8984930829610676,
+          0.8866652919678017,
+          0.884424832998775,
+          0.8846258749254048,
+          0.8868923339759931,
+          1.0216254580300301,
+          0.9353741250233725,
+          0.9255520830629393
+        ],
+        "previous": [
+          0.9260234999237582,
+          0.9268035840941593,
+          0.9488316249335185,
+          0.9139712910400704,
+          0.9199242499889806,
+          0.9286588340764865,
+          0.9172439579851925,
+          0.9170915000140667,
+          0.9820565419504419,
+          0.9497451670467854,
+          0.9636648750165477
+        ]
+      },
+      "baseline": {
+        "median_s": 0.9361023750388995,
+        "min_s": 0.9125655830139294,
+        "max_s": 1.0023900830419734
+      },
+      "optimized": {
+        "median_s": 0.8917564579751343,
+        "min_s": 0.884424832998775,
+        "max_s": 1.0216254580300301
+      },
+      "speedup": 1.0497287310533856,
+      "latency_reduction_pct": 4.737293510437091,
+      "baseline_repeatable": true,
+      "bitwise_equal": true,
+      "finite": true,
+      "max_abs_error": 0.0,
+      "rms_error": 0.0,
+      "paired_latency_reduction_pct": 4.336791148486063,
+      "previous": {
+        "median_s": 0.9268035840941593,
+        "min_s": 0.9139712910400704,
+        "max_s": 0.9820565419504419
+      },
+      "incremental_latency_reduction_pct": 3.6154018139621047,
+      "cache_bytes": 148258080,
+      "verification_probes": [
+        {
+          "name": "silence",
+          "input_shape": [
+            1,
+            2,
+            96000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "tones",
+          "input_shape": [
+            2,
+            2,
+            12347
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        },
+        {
+          "name": "noise",
+          "input_shape": [
+            1,
+            2,
+            48000
+          ],
+          "bitwise_equal": true,
+          "max_abs_error": 0.0,
+          "rms_error": 0.0,
+          "finite": true
+        }
+      ]
+    }
+  ],
+  "original_sources_unchanged": true,
+  "completed_at_utc": "2026-09-07T22:17:21.258842+00:00"
+}
