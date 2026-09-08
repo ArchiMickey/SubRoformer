@@ -30,12 +30,14 @@ def test_unavailable_mps_fails_before_download(monkeypatch):
 @pytest.mark.parametrize("supported", [False, True])
 def test_mps_auto_precision(monkeypatch, supported):
     monkeypatch.setattr(torch.backends.mps, "is_macos_or_newer", lambda *args: supported)
-    assert resolve_amp_dtype(torch.device("mps")) == (torch.bfloat16 if supported else torch.float16)
+    assert resolve_amp_dtype(torch.device("mps")) == torch.float16
     assert resolve_amp_dtype(torch.device("mps"), "fp16") == torch.float16
     assert resolve_amp_dtype(torch.device("mps"), "fp32") is None
     if not supported:
         with pytest.raises(ValueError, match="BF16 is unavailable"):
             resolve_amp_dtype(torch.device("mps"), "bf16")
+    else:
+        assert resolve_amp_dtype(torch.device("mps"), "bf16") == torch.bfloat16
 
 
 def test_cpu_auto_precision():

@@ -21,6 +21,37 @@
 Use the same config, sample rate, and output order as the PyTorch copy. This is
 an inference-weight export, not resumable optimizer state or a new SDR evaluation.
 
+## FP16 inference copy (default)
+
+- File: `checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors`.
+- Size: 207,349,744 bytes (FP32 copy: 414,655,864 bytes).
+- SHA-256: `1cdcafa9fd84a0a78df71b159c8896040a57d1ab5d6c783154c078952521ad0b`.
+- All 404 tensors exactly equal the FP32 copy cast to FP16 and remain finite.
+  Metadata retains provenance and adds `precision=fp16` and the conversion
+  source SHA-256. The original FP32 artifact is retained.
+- Uploaded on 2026-09-07 at revision
+  `1c74b2c1bae0abb2b076165149275b7ce025752e`; remote size and LFS SHA-256 match.
+  The repository was public before this upload; visibility was not changed.
+- Base-model app inference with FP16 weights passes on CPU and MPS for 4,800
+  stereo samples, returning four finite stems. CUDA was not available locally.
+- A fresh-cache default download matches the local checksum and config; MPS
+  inference with the configured 96,000-sample chunk also returns finite stems.
+
+The default resolver now selects this FP16 copy. App precision follows the
+checkpoint, with no precision selector or automatic FP32 CPU fallback. RMSNorm
+statistics use FP32 to prevent FP16 square overflow on CPU. Complex DSP
+operations and overlap-add accumulation retain full precision where needed.
+This is a lossy storage conversion, not a new SDR evaluation; the original
+benchmark below has not been rerun for FP16 weights.
+
+```bash
+uv run python -m checkpoint_utils \
+  --checkpoint checkpoints/subroformer_base_4stem_1400000_ema.safetensors \
+  --output checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors --fp16
+```
+
+- [FP16 checkpoint](https://huggingface.co/archimickey/SubRoformer/blob/1c74b2c1bae0abb2b076165149275b7ce025752e/checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors)
+
 ## Original artifact provenance
 
 This is a byte-for-byte copy of the evaluated EMA artifact, renamed for the
@@ -46,7 +77,7 @@ public training paths and evaluation defaults deliberately differ.
 
 Weights are locally present but ignored by Git. The configured HF destination
 is [archimickey/SubRoformer](https://huggingface.co/archimickey/SubRoformer),
-currently private. The safetensors copy and matching YAML were uploaded together
+which was private at initial publication. The safetensors copy and matching YAML were uploaded together
 at revision `23497a6972e2b880552a42e10b99893cb3ff205b`. The remote checkpoint
 is 414,655,864 bytes and its LFS SHA-256 matches the safetensors checksum above.
 Inference supports local-first downloading from this repository using an

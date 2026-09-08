@@ -80,6 +80,52 @@ def test_download_failures_are_not_hidden(tmp_path, monkeypatch):
         inference.resolve_pretrained_paths()
 
 
+def test_download_progress_uses_file_bytes_and_ignores_xet_transfer_bar(tmp_path, monkeypatch):
+    local_config = tmp_path / "local.yaml"
+    local_config.write_bytes(b"config")
+    cached = tmp_path / "cached.safetensors"
+    cached.write_bytes(b"checkpoint")
+    updates = []
+
+    def download(**kwargs):
+        with kwargs["tqdm_class"](total=10, initial=2, disable=True) as bar:
+            bar.update(3)
+            bar.update(5)
+        with kwargs["tqdm_class"](total=50, desc="checkpoint: downloading bytes") as bar:
+            bar.update(50)
+        return str(cached)
+
+    monkeypatch.setattr(inference, "hf_hub_download", download)
+    result = inference.resolve_pretrained_paths(local_config, tmp_path / "missing", download_progress=lambda *values: updates.append(values))
+    assert result == (local_config, cached)
+    assert updates == [(inference.DEFAULT_CHECKPOINT, completed, total) for completed, total in [(0, None), (2, 10), (5, 10), (10, 10), (10, 10)]]
+
+
+def test_offline_cache_miss_does_not_download(tmp_path):
+    from huggingface_hub.errors import LocalEntryNotFoundError
+
+    with pytest.raises(LocalEntryNotFoundError):
+        inference.resolve_pretrained_paths(tmp_path / "missing.yaml", tmp_path / "missing.pt", cache_dir=tmp_path / "empty-cache", local_files_only=True)
+
+
+def test_failed_download_does_not_report_completion(tmp_path, monkeypatch):
+    updates = []
+
+    def download(**kwargs):
+        with kwargs["tqdm_class"](total=100) as bar:
+            bar.update(20)
+        raise RuntimeError("network interrupted")
+
+    monkeypatch.setattr(inference, "hf_hub_download", download)
+    with pytest.raises(RuntimeError, match="network interrupted"):
+        inference.resolve_pretrained_paths(tmp_path / "missing.yaml", tmp_path / "missing.pt", download_progress=lambda *values: updates.append(values))
+    assert updates[-1] == (inference.DEFAULT_CONFIG, 20, 100)
+
+
+def test_default_checkpoint_is_fp16():
+    assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors"
+
+
 def test_cli_config_and_checkpoint_are_optional(monkeypatch):
     calls = []
     monkeypatch.setattr(inference, "separate_file", lambda *args, **kwargs: calls.append((args, kwargs)) or [])
