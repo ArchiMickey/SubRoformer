@@ -24,6 +24,8 @@ def shift_frequency(x: Tensor, f: Tensor, sr: int, n=1) -> Tensor:
     Returns:
         out: (any, k, l)
     """
+    if f.dtype in {torch.float16, torch.bfloat16}:
+        f = f.float()
     omega = f / (sr / 2) * math.pi  # (k,)
     t = torch.arange(x.shape[-1], device=x.device) * n  # (l,)
     a = torch.exp(1.j * omega[:, None] * t[None, :])

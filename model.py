@@ -12,6 +12,7 @@ from torch import LongTensor, Tensor
 from torch.utils.checkpoint import checkpoint
 
 from dsp import SubbandFilter, mel_linear_banks_triangle
+from dsp.inference_optimized import InferenceSubbandFilter
 from dsp.overlap_add import overlap_add
 
 try:
@@ -19,6 +20,16 @@ try:
     FLASH_ATTN_AVAILABLE = True
 except ImportError:
     FLASH_ATTN_AVAILABLE = False
+
+
+class MPSCompatibleLinear(nn.Linear):
+    """Keep bias addition explicit on MPS, including virtualized Metal GPUs."""
+
+    def forward(self, x: Tensor) -> Tensor:
+        if x.device.type == "mps" and self.bias is not None:
+            output = F.linear(x, self.weight)
+            return output + self.bias.to(output.dtype)
+        return super().forward(x)
 
 
 class RoPE(nn.Module):
@@ -308,8 +319,11 @@ class RMSNorm(nn.Module):
             x: (b, t, d)
         """
         
+        input_dtype = x.dtype
+        if input_dtype in {torch.float16, torch.bfloat16}:
+            x = x.float()
         norm_x = torch.mean(x ** 2, dim=-1, keepdim=True)
-        output = x * torch.rsqrt(norm_x + self.eps) * self.scale
+        output = (x * torch.rsqrt(norm_x + self.eps)).to(input_dtype) * self.scale
         return output
 
 
@@ -400,11 +414,11 @@ class SelfAttention(nn.Module):
         else:
             self.pos_embedding = None
 
-        self.qkv_linear = nn.Linear(dim, 3 * dim)
+        self.qkv_linear = MPSCompatibleLinear(dim, 3 * dim)
         self.norm_q = RMSNorm(dim)
         self.norm_k = RMSNorm(dim)
 
-        self.proj = nn.Linear(dim, dim)
+        self.proj = MPSCompatibleLinear(dim, dim)
     
     def _create_window_mask(self, seq_len: int, device: torch.device) -> Tensor:
         r"""Create attention mask for windowed attention.
@@ -545,9 +559,9 @@ class SwiGLU(nn.Module):
         
         intermediate_dim = intermediate_dim * 2 // 3
         
-        self.gate_proj = nn.Linear(dim, intermediate_dim)
-        self.up_proj = nn.Linear(dim, intermediate_dim)
-        self.down_proj = nn.Linear(intermediate_dim, dim)
+        self.gate_proj = MPSCompatibleLinear(dim, intermediate_dim)
+        self.up_proj = MPSCompatibleLinear(dim, intermediate_dim)
+        self.down_proj = MPSCompatibleLinear(intermediate_dim, dim)
         self.act_fn = nn.SiLU()
         
     
@@ -569,9 +583,9 @@ class GELUFeedForward(nn.Module):
 
     def __init__(self, dim: int, intermediate_dim: int):
         super().__init__()
-        self.up_proj = nn.Linear(dim, intermediate_dim)
+        self.up_proj = MPSCompatibleLinear(dim, intermediate_dim)
         self.act_fn = nn.GELU()
-        self.down_proj = nn.Linear(intermediate_dim, dim)
+        self.down_proj = MPSCompatibleLinear(intermediate_dim, dim)
 
     def forward(self, x: Tensor) -> Tensor:
         return self.down_proj(self.act_fn(self.up_proj(x)))
@@ -736,9 +750,9 @@ class TimeMixBlock(nn.Module):
         self.pwconv = nn.Conv1d(dim, dim, kernel_size=7, padding=3, groups=dim)
         self.norm = RMSNorm(dim)
         
-        self.proj = nn.Linear(dim, projection_dim)
+        self.proj = MPSCompatibleLinear(dim, projection_dim)
         self.grn = GRN(hidden_dim)
-        self.proj_out = nn.Linear(hidden_dim, dim)
+        self.proj_out = MPSCompatibleLinear(hidden_dim, dim)
 
     def forward(self, x):
         h = self.pwconv(x.transpose(1, 2)).transpose(1, 2)
@@ -1262,6 +1276,7 @@ class SBRoformer(nn.Module):
                 bandpass_filter_len=bandpass_filter_len,
                 upsample_filter_len=upsample_filter_len,
             )
+            self.sb_filter = InferenceSubbandFilter(self.sb_filter, level=3)
         else:
             self.sb_filter = None
 
@@ -1535,20 +1550,7 @@ class SBRoformer(nn.Module):
             return mel_linear_banks_triangle(sample_rate, n_bands, max_half_bandwidth)
         raise ValueError(f"Unsupported bank_type: {self.bank_type}")
 
-    def forward(self, audio: Tensor) -> Tensor:
-        audio_length = audio.shape[-1]
-        global_spec = None
-        subbands = None
-        if self.frontend_type == "waveform_subband":
-            if self.sb_filter is None:
-                raise RuntimeError("Waveform subband frontend is not initialized")
-            audio = self.pad_audio(audio, self.sb_factor)
-            subbands = self.sb_filter.analysis(audio)
-            features = self.analysis(subbands)
-        else:
-            if self.global_frontend is None:
-                raise RuntimeError("Global STFT frontend is not initialized")
-            global_spec, features = self.global_frontend.analysis(audio)
+    def predict_mask(self, features: Tensor) -> Tensor:
         frames_num = features.shape[2]
         bands_num = features.shape[3]
 
@@ -1583,7 +1585,23 @@ class SBRoformer(nn.Module):
                 [head(x)[:, :, :frames_num, :bands_num] for head in self.stem_mask_heads],
                 dim=1,
             )
-        features = features[:, :, :frames_num, :bands_num]
+        return mask
+
+    def forward(self, audio: Tensor) -> Tensor:
+        audio_length = audio.shape[-1]
+        global_spec = None
+        subbands = None
+        if self.frontend_type == "waveform_subband":
+            if self.sb_filter is None:
+                raise RuntimeError("Waveform subband frontend is not initialized")
+            audio = self.pad_audio(audio, self.sb_factor)
+            subbands = self.sb_filter.analysis(audio)
+            features = self.analysis(subbands)
+        else:
+            if self.global_frontend is None:
+                raise RuntimeError("Global STFT frontend is not initialized")
+            global_spec, features = self.global_frontend.analysis(audio)
+        mask = self.predict_mask(features)
         if self.frontend_type != "waveform_subband":
             if self.global_frontend is None or global_spec is None:
                 raise RuntimeError("Global STFT analysis must run before synthesis")

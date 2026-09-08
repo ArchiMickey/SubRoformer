@@ -12,6 +12,7 @@ from model import (
     LinearFusion,
     MultiplicativeFusion,
     NoSkipFusion,
+    RMSNorm,
     RaggedBandLinear,
     RaggedBandMaskEstimator,
     SwiGLU,
@@ -20,6 +21,22 @@ from model import (
 )
 from tests.helpers import tiny_config
 from training_utils import build_model, load_config
+
+
+@pytest.mark.parametrize("dtype", [torch.float16, torch.bfloat16])
+@pytest.mark.parametrize("amplitude", [0.0, 1e-4, 1.0, 1000.0])
+def test_low_precision_rmsnorm_matches_float32(dtype, amplitude):
+    norm = RMSNorm(4).to(dtype)
+    inputs = (torch.tensor([[[0.3, -0.3, 1.0, -1.0]]]) * amplitude).to(dtype).requires_grad_()
+    reference = RMSNorm(4)(inputs.detach().float())
+    with torch.autocast("cpu", dtype=dtype):
+        actual = norm(inputs)
+    assert actual.dtype == dtype
+    assert norm.scale.dtype == dtype
+    torch.testing.assert_close(actual.float(), reference, rtol=0.005, atol=1e-4)
+    actual.float().sum().backward()
+    assert torch.isfinite(inputs.grad).all()
+    assert torch.isfinite(norm.scale.grad).all()
 
 
 def test_transformer_uses_real_swiglu():

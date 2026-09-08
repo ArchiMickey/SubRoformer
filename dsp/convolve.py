@@ -16,6 +16,10 @@ def fftconvolve(x: Tensor, h: Tensor, use_complex_fft: bool, mode="same") -> Ten
         out: (b, o, l)
     """
 
+    if x.dtype in {torch.float16, torch.bfloat16}:
+        x = x.float()
+    if h.dtype in {torch.float16, torch.bfloat16}:
+        h = h.float()
     L1 = x.shape[-1]
     L2 = h.shape[-1]
     L = L1 + L2 - 1  # full convolution length
