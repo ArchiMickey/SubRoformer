@@ -1,0 +1,115 @@
+{
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "torch": "2.14.0",
+  "hardware": "Apple M5 Pro",
+  "coremltools": "9.0",
+  "cpu_threads": 4,
+  "batch_size": 1,
+  "warmup": 2,
+  "repeats": 5,
+  "checkpoint_sha256": "1cdcafa9fd84a0a78df71b159c8896040a57d1ab5d6c783154c078952521ad0b",
+  "validation_audio_sha256": "6502fa280919291ec0969a2c02fb6234b08dbb4e69f31c77fe933e2dec122017",
+  "source_sha256": {
+    "coreml_inference.py": "c561158f2d3eb91888a14d848d186aa370cfc39068894561bbc10eb14305c1ab",
+    "model.py": "274155557c847963d694fc6f697e7be361fc4215cff01d5a1ac253414d85327c",
+    "benchmarks/benchmark_coreml_dsp.py": "5ac0e3a85acec8eb41d4dbcf502281e3a9cc5ac5e2578da254144bde98e277e7"
+  },
+  "artifact_sha256": {
+    "config.yaml": "f0523d18524f97d71071a33097d186b25becb5ddf87ebc11c1fa27135db6bc57",
+    "conversion.json": "cde88fa80aa4e3f576362e9dc36f4601d33bcbf36aedb7588cfe1a312bd45121",
+    "dsp.safetensors": "a9e5391dbb48895735b97a182209b3b1ec1f9bd42280530bbc5ad0fc91716f8e",
+    "mask.mlmodelc/analytics/coremldata.bin": "d67c06addaf5b798d49a2f079817dcf9ecdf52a44ee0bfca1d2fbe838d42dd7b",
+    "mask.mlmodelc/coremldata.bin": "392976e6ceecb1b34ed0fa4dcf359675820f53cab2f0980cf860941faee7cfb2",
+    "mask.mlmodelc/model.mil": "43f34860183d9eecb61b512c47ebf5c3de04e68b879638edd36653528840371b",
+    "mask.mlmodelc/weights/weight.bin": "d3a71c8d5940f16f047c9c73ad29323c64dc9fcd907d932d84b4dcdb5134987a",
+    "mask.mlpackage/Data/com.apple.CoreML/model.mlmodel": "74b62509944534066e91a06a6a2a33574ba5364d9d49e6a38ec2160b73ac10fa",
+    "mask.mlpackage/Data/com.apple.CoreML/weights/weight.bin": "d3a71c8d5940f16f047c9c73ad29323c64dc9fcd907d932d84b4dcdb5134987a",
+    "mask.mlpackage/Manifest.json": "077699ede2a0eeeee35be56d87247fb8098ac418f62d4bc181fd4e784be722bb"
+  },
+  "devices": {
+    "cpu": {
+      "load_s": 0.4167045410722494,
+      "first_forward_s": 1.298058458021842,
+      "warm_seconds": [
+        0.9595046250615269,
+        0.9270613751141354,
+        0.9673542910022661,
+        0.9277301670517772,
+        0.9582401249790564
+      ],
+      "median_s": 0.9582401249790564,
+      "errors": {
+        "noise": {
+          "fp32_relative_rms": 0.0001705846826032092,
+          "fp32_absolute_rms": 4.262498670782755e-06
+        },
+        "silence": {
+          "fp32_relative_rms": 0.0,
+          "fp32_absolute_rms": 0.0
+        },
+        "music": {
+          "fp32_relative_rms": 0.00015036926773355288,
+          "fp32_absolute_rms": 3.3576705669525654e-06
+        },
+        "music_middle": {
+          "fp32_relative_rms": 0.0007213969865316121,
+          "fp32_absolute_rms": 0.00013227292902284865
+        },
+        "music_end": {
+          "fp32_relative_rms": 0.009351508075221723,
+          "fp32_absolute_rms": 6.970102657796217e-09
+        }
+      }
+    },
+    "mps": {
+      "load_s": 0.34253783291205764,
+      "first_forward_s": 0.399841875070706,
+      "warm_seconds": [
+        0.17204887489788234,
+        0.1668208750197664,
+        0.16703566699288785,
+        0.16850399994291365,
+        0.16715791693422943
+      ],
+      "median_s": 0.16715791693422943,
+      "errors": {
+        "noise": {
+          "fp32_relative_rms": 0.0001716258916425989,
+          "fp32_absolute_rms": 4.288515966583745e-06,
+          "cpu_relative_rms": 0.0002178373299363743,
+          "cpu_absolute_rms": 5.443215351794185e-06,
+          "bitwise_equal": false
+        },
+        "silence": {
+          "fp32_relative_rms": 0.0,
+          "fp32_absolute_rms": 0.0,
+          "cpu_relative_rms": 0.0,
+          "cpu_absolute_rms": 0.0,
+          "bitwise_equal": true
+        },
+        "music": {
+          "fp32_relative_rms": 0.0001610924800385951,
+          "fp32_absolute_rms": 3.597114536338803e-06,
+          "cpu_relative_rms": 0.00020920032515026334,
+          "cpu_absolute_rms": 4.6713800963536884e-06,
+          "bitwise_equal": false
+        },
+        "music_middle": {
+          "fp32_relative_rms": 0.0007319192499211518,
+          "fp32_absolute_rms": 0.00013420225590453686,
+          "cpu_relative_rms": 0.0005824442352227,
+          "cpu_absolute_rms": 0.00010679422147694852,
+          "bitwise_equal": false
+        },
+        "music_end": {
+          "fp32_relative_rms": 0.009269871291248535,
+          "fp32_absolute_rms": 6.909255063978365e-09,
+          "cpu_relative_rms": 0.0019059492142770153,
+          "cpu_absolute_rms": 1.426220666243694e-09,
+          "bitwise_equal": false
+        }
+      }
+    }
+  },
+  "speedup": 5.732544067033864
+}
