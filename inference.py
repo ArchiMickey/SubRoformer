@@ -228,6 +228,7 @@ def load_separator(
         return load_coreml_separator(
             repo_id=repo_id, revision=revision, cache_dir=cache_dir,
             local_files_only=local_files_only,
+            dsp_device="mps" if device == "mps" else "cpu",
         )
     device = resolve_device(device)
     config_path, checkpoint_path = resolve_pretrained_paths(
@@ -313,6 +314,7 @@ def separate_file(
         model, config = load_coreml_separator(
             repo_id=repo_id, revision=revision, cache_dir=cache_dir,
             local_files_only=local_files_only,
+            dsp_device="mps" if device == "mps" else "cpu",
         )
         amp_dtype = None
     else:
