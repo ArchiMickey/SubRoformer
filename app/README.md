@@ -11,8 +11,7 @@ write finalized float32 samples directly to WAV files. They do not retain
 full-track stem arrays or all overlapping predictions. The input waveform is
 still decoded/resampled in memory; model and batch memory are unchanged.
 
-Playback uses temporary disk-backed PCM and bounded range reads, with the
-residual computed on demand. Temporary playback files close on reset or exit.
+Playback uses temporary disk-backed PCM and bounded range reads. Temporary playback files close on reset or exit.
 The GUI acknowledges each audio delivery before the worker continues, avoiding
 an unbounded queue when the interface is slower than inference. Export and
 temporary-storage disks must have enough free space for the audio.
@@ -78,7 +77,7 @@ platform-specific validation. Linux may need system Qt/XCB libraries.
    The current repo is public: anonymous full downloads were verified on 2026-09-06.
    No `HF_TOKEN` or cached login is required; private/gated repos still need access.
    Offline mode uses local files or the HF cache and never starts a download.
-4. Click **Separate stems**. Stems and Null start with a gray hatched unprocessed
+4. Click **Separate stems**. Stems start with a gray hatched unprocessed
    region, distinct from genuine silence. A pale yellow boundary
    advances as finalized spectrogram columns arrive; unfinished regions remain
    masked after cancellation or failure. The mixture is already available.
@@ -110,13 +109,12 @@ This measures progressive file-separation throughput, not live audio latency.
 
 ### Listen while separating
 
-The **Mixture, Vocals, Bass, Drums, Others, Null** tabs control playback.
-**Mixture** turns all stems on, including **Null** (mixture minus every separated
-stem). Clicking a stem toggles only that stem; disabling one also clears the
-Mixture indicator. Playback always sums enabled stems. All-on plays the original
+The **Mixture, Vocals, Bass, Drums, Others** tabs control playback.
+**Mixture** turns all stems on. Clicking a stem toggles only that stem; disabling one also clears the
+Mixture indicator. Playback sums only enabled stems when a subset is on. All-on plays the original
 mixture directly, without double-counting it, and works before separation finishes.
 Unavailable stems are disabled for single-stem or nonstandard models.
-**Mute all** turns every stem off (including Null) without pausing: silent audio
+**Mute all** turns every stem off without pausing: silent audio
 keeps the timeline advancing to the end of the mixture. Enable stems or Mixture
 to hear audio again at the current timestamp. Muting while paused stays paused.
 
@@ -125,8 +123,11 @@ enabled stems**. Tab changes retain the current timestamp and pause/play state;
 turning everything off keeps playback running silently. If a newly enabled stem is not finalized
 at the current position, playback stops rather than jumping backward.
 Dragging pans, scrolling zooms, and teal playheads share the playback position.
-**Space** pauses/resumes; **1–6** toggle the corresponding tabs (Mixture selects
-all); **backtick (`)** mutes all stems. Stem buttons show their keys. Text and numeric fields keep normal keyboard entry. Holding a shortcut
+**Space** pauses/resumes; **1–5** toggle the corresponding tabs (Mixture selects
+all); **backtick (`)** mutes all stems. The separate **Invert (~)** button or
+**Tilde (~)** shortcut inverts the enabled stems,
+so Mixture becomes all muted, and all muted becomes Mixture.
+Stem buttons show their keys. Text and numeric fields keep normal keyboard entry. Holding a shortcut
 does not repeatedly toggle it.
 
 Wheel and trackpad gestures over configuration fields or the divider beside them
@@ -143,22 +144,20 @@ After cancellation, already finalized audio remains playable.
 Playback uses Qt Multimedia and the default system output device, with no new
 dependency. The device must support the model's sample rate, channel count, and
 float32 format; missing/unsupported devices show a playback-only error and do
-not stop separation. Stems and Null are calculated from unclipped float32 audio;
-only the final playback sum is clipped to [-1, 1]. Exported WAVs are unchanged;
-Null is not exported. Its spectrogram starts silent and updates from finalized
-mixture-minus-stems audio, using the same Magma colors and −90 to 0 dBFS scale.
-Clicking it seeks without changing the enabled stems. Playback retains finalized
-stem and mixture PCM in temporary files and computes Null only for requested
-playback ranges.
+not stop separation. Stems retain unclipped float32 audio; only the final
+playback sum is clipped to [-1, 1]. Exported WAVs are unchanged. Playback retains
+finalized stem and mixture PCM in temporary files.
 
 ### Theme and spectrogram colors
 
 The interface uses [Catppuccin Macchiato](https://catppuccin.com/palette/#macchiato)
-with mauve accents. Spectrograms use the perceptually uniform sequential
-[Magma colormap](https://matplotlib.org/stable/users/explain/colors/colormaps.html):
-near-black/purple for quiet audio, through rose/peach to pale yellow for loud audio.
-All plots retain the same fixed −90 to 0 dBFS range so colors remain comparable
-across stems and during separation. A contrasting teal line marks playback.
+with matching button and spectrogram-frame accents: Mixture is mauve, Vocals pink,
+Bass blue, Drums peach, and Others green. Mute all is red and Invert is yellow,
+with separate tooltips for their actions. Enabled audio buttons fill with their
+accent when selected. Spectrogram titles and selected frame borders match their
+buttons; the spectrogram images retain the Magma colormap and fixed −90 to 0 dBFS
+range during separation.
+A teal line marks playback.
 
 Drag the glass-style vertical divider to resize the configuration pane, or the
 horizontal divider above playback to resize the status pane. Both panes retain
@@ -192,6 +191,13 @@ during export may leave an incomplete run directory reported in the UI.
 The footer refreshes every second on a background thread for the selected
 inference device (`auto` displays its resolved device, including CUDA index).
 Values use decimal **GB = 1,000,000,000 bytes**:
+
+- **Core ML (CPU or MPS DSP):** combined resident RAM (RSS) of the app and
+  its child processes, including the isolated inference worker. Shared pages
+  can be counted more than once; this is not GPU-only usage or an exact physical
+  footprint. The percentage is whole-system unified RAM usage.
+
+For the **PyTorch** backend:
 
 - **CPU:** app resident RAM (RSS), including shared pages; whole-system RAM
   percentage is `(total − available) / total`, as reported by psutil.
@@ -304,6 +310,15 @@ Implementation references: [Qt worker signals](https://doc.qt.io/qtforpython-6/e
 and [pyqtgraph ImageItem](https://pyqtgraph.readthedocs.io/en/pyqtgraph-0.13.6/api_reference/graphicsItems/imageitem.html).
 # macOS Core ML backend
 
-The app defaults to PyTorch with MPS and FP16 on supported Macs. Core ML is
-an optional CLI/API backend (`--backend coreml`), not selected automatically.
+The app defaults to Core ML on macOS 15+ and PyTorch elsewhere. Choose
+**Backend → Core ML** and **Device → mps** for
+GPU-accelerated DSP, or CPU for CPU DSP. Auto selects MPS when available.
+MPS DSP requires PyTorch 2.14+; Core ML requires macOS 15+ and blank custom
+config/checkpoint fields. Select PyTorch manually for custom models.
+Core ML inference runs in a dedicated spawned process so its native prediction
+call cannot hold the GUI's Python GIL and starve playback refills. The worker
+is closed after completion, cancellation, or failure. Checkpoints, DSP precision,
+and playback buffering are unchanged. The Core ML memory indicator reports
+combined app-and-worker resident RAM, rather than GUI-only Metal allocations;
+system RAM usage covers all processes.
 See [Core ML setup, limitations, and export](../docs/coreml.md).

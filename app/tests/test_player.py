@@ -9,7 +9,7 @@ pytest.importorskip("PySide6")
 from PySide6.QtCore import QCoreApplication
 from PySide6.QtMultimedia import QtAudio
 
-from app.player import MIXTURE_KEY, NULL_KEY, StemAudio, StemPlayer
+from app.player import MIXTURE_KEY, StemAudio, StemPlayer
 
 
 class FakeSink:
@@ -185,26 +185,23 @@ def test_mix_sums_enabled_stems_and_clips_only_final_output(player):
     assert not player.playing and player.position == 1000
 
 
-def test_null_waits_for_all_stems_and_uses_unclipped_samples(player):
-    player.reset(1000, [MIXTURE_KEY, "vocals", "drums", NULL_KEY])
+def test_all_stems_play_mixture_and_subsets_sum_only_selected_stems(player):
+    player.reset(1000, [MIXTURE_KEY, "vocals", "drums", "bass"])
     player.append(MIXTURE_KEY, 0, np.full((2, 1000), .8, dtype=np.float32))
-    player.select_stems(["vocals", "drums", NULL_KEY])
+    player.select_stems(["vocals", "drums", "bass"])
+    assert player.playback_sources == (MIXTURE_KEY,)
     assert player.available == 1000
     player.seek_time(0)
     np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), .8)
     player.append("vocals", 0, np.full((2, 600), 2, dtype=np.float32))
-    assert player.buffers[NULL_KEY].frames == 0
     player.append("drums", 0, np.full((2, 400), -1.5, dtype=np.float32))
-    assert player.buffers[NULL_KEY].frames == 400
-    np.testing.assert_allclose(player.samples(NULL_KEY, 0, 400), .3, atol=1e-6)
-    player.select_stems([NULL_KEY])
+    player.select_stems(["vocals", "drums"])
+    assert player.playback_sources == ("vocals", "drums")
     assert player.available == 400
-    np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), .3, atol=1e-6)
-    player.append("drums", 400, np.full((2, 200), -1.5, dtype=np.float32))
-    assert player.available == 600
-    player.pause()
-    player.select_stems(["vocals", NULL_KEY])
-    assert not player.playing
+    np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), .5)
+    player.select_stems([])
+    assert player.playback_sources == ()
+    np.testing.assert_array_equal(np.frombuffer(player.sink.writes, dtype=np.float32), 0)
 
 
 def test_disk_backed_random_reads_preserve_float32():
@@ -219,19 +216,6 @@ def test_disk_backed_random_reads_preserve_float32():
             np.testing.assert_array_equal(buffer.read(start, end).T, audio[:, start:end])
     finally:
         buffer.close()
-
-
-def test_residual_has_no_pcm_storage_and_preserves_subtraction_order(player):
-    player.reset(1000, [MIXTURE_KEY, "vocals", "drums", NULL_KEY])
-    sources = np.random.default_rng(4).normal(size=(3, 2, 1000)).astype(np.float32)
-    for stem, audio in zip([MIXTURE_KEY, "vocals", "drums"], sources):
-        player.append(stem, 0, audio)
-    residual = player.buffers[NULL_KEY]
-    assert not hasattr(residual, "file") and not hasattr(residual, "data")
-    np.testing.assert_array_equal(
-        player.samples(NULL_KEY, 125, 410).T,
-        (sources[0] - sources[1] - sources[2])[:, 125:410],
-    )
 
 
 def test_disk_read_failure_stops_playback(player, monkeypatch):

@@ -53,6 +53,52 @@ def test_bad_device_is_unavailable_not_zero():
     assert "unavailable" in result.detail
 
 
+@pytest.mark.parametrize("device", ["cpu", "mps", "auto"])
+def test_coreml_includes_worker_rss_without_gui_metal_query(monkeypatch, device):
+    child = SimpleNamespace(memory_info=lambda: SimpleNamespace(rss=2_000_000_000))
+    process = SimpleNamespace(
+        memory_info=lambda: SimpleNamespace(rss=500_000_000),
+        children=lambda recursive: [child] if recursive else [],
+    )
+    monkeypatch.setattr(memory.psutil, "Process", lambda: process)
+    monkeypatch.setattr(memory.psutil, "virtual_memory", lambda: SimpleNamespace(percent=60))
+    monkeypatch.setattr(memory, "resolve_device", lambda requested: torch.device("mps" if requested == "auto" else requested))
+    monkeypatch.setattr(memory.torch.mps, "driver_allocated_memory", lambda: pytest.fail("GUI-only Metal query"))
+    result = memory.read_memory(device, "coreml")
+    assert result.app_bytes == 2_500_000_000
+    assert result.backend == "coreml"
+    assert result.used_percent == 60
+    assert "RSS" in result.app_label
+    assert "Shared pages" in result.detail
+
+
+def test_coreml_worker_exit_during_sampling(monkeypatch):
+    def exited():
+        raise memory.psutil.NoSuchProcess(123)
+
+    process = SimpleNamespace(
+        memory_info=lambda: SimpleNamespace(rss=500_000_000),
+        children=lambda recursive: [SimpleNamespace(memory_info=exited)],
+    )
+    monkeypatch.setattr(memory.psutil, "Process", lambda: process)
+    result = memory.read_memory("cpu", "coreml")
+    assert result.app_bytes == 500_000_000
+
+
+def test_coreml_unreadable_worker_reports_unavailable(monkeypatch):
+    def denied():
+        raise memory.psutil.AccessDenied(123)
+
+    process = SimpleNamespace(
+        memory_info=lambda: SimpleNamespace(rss=500_000_000),
+        children=lambda recursive: [SimpleNamespace(memory_info=denied)],
+    )
+    monkeypatch.setattr(memory.psutil, "Process", lambda: process)
+    result = memory.read_memory("cpu", "coreml")
+    assert result.app_bytes is None
+    assert "unavailable" in result.detail
+
+
 def test_failed_global_query_preserves_valid_app_reading(monkeypatch):
     monkeypatch.setattr(memory.torch.cuda, "memory_reserved", lambda index: 100)
 
