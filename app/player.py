@@ -8,7 +8,6 @@ from PySide6.QtMultimedia import QAudioFormat, QAudioSink, QMediaDevices, QtAudi
 
 
 MIXTURE_KEY = "\x00mixture"
-NULL_KEY = "\x00null"
 
 
 class StemAudio:
@@ -44,32 +43,6 @@ class StemAudio:
         self.file.close()
 
 
-class ResidualAudio:
-    """Compute residual PCM only for the requested playback range."""
-
-    def __init__(self, sources):
-        self.sources = sources
-
-    @property
-    def frames(self):
-        return min(source.frames for source in self.sources.values())
-
-    @property
-    def channels(self):
-        return self.sources[MIXTURE_KEY].channels
-
-    def read(self, start, end):
-        end = min(end, self.frames)
-        mixture = self.sources[MIXTURE_KEY].read(start, end).copy()
-        for stem, source in self.sources.items():
-            if stem != MIXTURE_KEY:
-                mixture -= source.read(start, end)
-        return mixture
-
-    def close(self):
-        pass
-
-
 class StemPlayer(QObject):
     changed = Signal()
     failed = Signal(str)
@@ -91,9 +64,7 @@ class StemPlayer(QObject):
         self.rate = rate
         for buffer in self.buffers.values():
             buffer.close()
-        self.buffers = {stem: StemAudio() for stem in stems if stem != NULL_KEY}
-        if NULL_KEY in stems:
-            self.buffers[NULL_KEY] = ResidualAudio(dict(self.buffers))
+        self.buffers = {stem: StemAudio() for stem in stems}
         self.selected = ()
         self.position = 0
         self.changed.emit()
@@ -110,7 +81,7 @@ class StemPlayer(QObject):
     @property
     def playback_sources(self):
         components = set(self.buffers) - {MIXTURE_KEY}
-        if MIXTURE_KEY in self.buffers and NULL_KEY in components and set(self.selected) == components:
+        if MIXTURE_KEY in self.buffers and components and set(self.selected) == components:
             return (MIXTURE_KEY,)
         return self.selected
 

@@ -19,6 +19,7 @@ class MemoryUsage:
     app_label: str = "App memory"
     system_label: str = "Device-wide used"
     detail: str = ""
+    backend: str = "torch"
 
     def text(self):
         app = f"{self.app_bytes / 1_000_000_000:.2f} GB" if self.app_bytes is not None else "N/A"
@@ -26,12 +27,25 @@ class MemoryUsage:
         return f"{self.device.upper()} · {self.app_label}: {app} · {self.system_label}: {system}"
 
 
-def read_memory(requested):
-    usage = MemoryUsage(requested, requested)
+def read_memory(requested, backend="torch"):
+    usage = MemoryUsage(requested, requested, backend=backend)
     try:
         device = resolve_device(requested)
         usage.device = str(device)
-        if device.type == "cpu":
+        if backend == "coreml":
+            usage.app_label = "App + workers RAM (RSS)"
+            usage.system_label = "System unified RAM used"
+            process = psutil.Process()
+            resident_bytes = process.memory_info().rss
+            for child in process.children(recursive=True):
+                try:
+                    resident_bytes += child.memory_info().rss
+                except psutil.NoSuchProcess:
+                    continue
+            usage.app_bytes = resident_bytes
+            usage.used_percent = psutil.virtual_memory().percent
+            usage.detail = "Combined resident RAM of the app and its child processes, including the Core ML worker. Shared pages can be counted more than once; this is not GPU-only memory or an exact physical footprint. Percentage is whole-system unified RAM usage. GB = 10⁹ bytes."
+        elif device.type == "cpu":
             usage.app_label = "App RAM (RSS)"
             usage.system_label = "System RAM used"
             usage.app_bytes = psutil.Process().memory_info().rss
@@ -63,11 +77,12 @@ class MemoryMonitor(QThread):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.requested = "auto"
+        self.backend = "torch"
         self.stopped = Event()
 
     def run(self):
         while not self.stopped.is_set():
-            self.updated.emit(read_memory(self.requested))
+            self.updated.emit(read_memory(self.requested, self.backend))
             self.stopped.wait(1)
 
     def stop(self):

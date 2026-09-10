@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -17,7 +18,7 @@ from PySide6.QtTest import QTest
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QImage, QPalette, QWheelEvent
 import pyqtgraph as pg
 
-from app.gui import InferenceWorker, MainWindow, Spectrogram, STYLE, MIXTURE_KEY, NULL_KEY
+from app.gui import InferenceWorker, MainWindow, Spectrogram, STYLE, MIXTURE_KEY
 from app.memory import MemoryUsage
 from model_utils import build_model
 from tests.helpers import tiny_config
@@ -62,7 +63,8 @@ def test_cards_start_blank_and_replace_only_received_columns(application):
     assert np.all(window.cards["vocals"].values[:, :3] == -20)
     assert np.all(window.cards["vocals"].values[:, 3:] == -90)
     assert np.all(window.cards["drums"].values == -90)
-    assert np.all(window.cards[NULL_KEY].values == -90)
+    assert set(window.cards) == {MIXTURE_KEY, "vocals", "drums"}
+    assert set(window.stem_buttons) == {MIXTURE_KEY, "vocals", "bass", "drums", "other"}
     window.close()
 
 
@@ -133,7 +135,6 @@ def test_pending_overlay_tracks_finalized_columns_not_amplitude(application):
     assert not card.pending_background.isVisible()
     assert not card.pending_hatching.isVisible()
     assert not card.ready_boundary.isVisible()
-    assert window.cards[NULL_KEY].pending_background.isVisible()
     window.close()
 
 
@@ -159,16 +160,26 @@ def test_playback_button_label_and_macchiato_colors(application, monkeypatch):
         window.close()
 
 
-def test_macchiato_theme_and_magma_spectrogram(application):
+def test_macchiato_frames_and_buttons_with_magma_spectrograms(application):
+    from app.gui import PLAYBACK_COLORS
+
     window = MainWindow()
     values = np.linspace(-90, 0, 513 * 30, dtype=np.float32).reshape(513, 30)
-    window.prepare(values, 1600, 8000, ["vocals"])
+    window.prepare(values, 1600, 8000, ["vocals", "bass", "drums", "other"])
     window.show()
     application.processEvents()
     assert window.palette().color(QPalette.ColorRole.Window).name() == "#24273a"
     assert window.palette().color(QPalette.ColorRole.WindowText).name() == "#cad3f5"
-    for card in window.cards.values():
-        np.testing.assert_array_equal(card.image.lut, pg.colormap.get("magma").getLookupTable(nPts=256))
+    assert window.stem_tabs.count() == 7
+    buttons = {**window.stem_buttons, "mute": window.mute_all, "invert": window.invert_button}
+    assert len({button.property("accent") for button in buttons.values()}) == 7
+    for key, button in buttons.items():
+        assert button.property("accent") == PLAYBACK_COLORS[key]
+    for key, card in window.cards.items():
+        color = PLAYBACK_COLORS[key]
+        assert f'QFrame#card[selected="true"] {{ border-color: {color}; }}' in card.styleSheet()
+        expected = pg.colormap.get("magma")
+        np.testing.assert_array_equal(card.image.lut, expected.getLookupTable(nPts=256))
         np.testing.assert_array_equal(card.image.getLevels(), [-90, 0])
         assert card.playhead.pen.color().name() == "#8bd5ca"
         assert card.plot.getAxis("left").textPen().color().name() == "#b8c0e0"
@@ -177,12 +188,33 @@ def test_macchiato_theme_and_magma_spectrogram(application):
     window.close()
 
 
+def test_invert_button_remains_available_when_all_stems_are_muted(application):
+    window = MainWindow()
+    try:
+        assert not window.invert_button.isEnabled()
+        stems = ["vocals", "bass", "drums", "other"]
+        window.prepare(np.full((513, 30), -90, dtype=np.float32), 1600, 8000, stems)
+        window.player.select_stems(["vocals"])
+        window.invert_button.click()
+        assert set(window.player.selected) == {"bass", "drums", "other"}
+        window.mute_all.click()
+        assert not window.player.selected
+        assert window.invert_button.isEnabled()
+        window.invert_button.click()
+        assert set(window.player.selected) == set(stems)
+        window.invert_button.click()
+        assert not window.player.selected
+    finally:
+        window.close()
+
+
 def test_pane_dividers_resize_without_resetting_playback(application, monkeypatch):
     from app.tests.test_player import FakeSink
 
     window = MainWindow()
     values = np.full((513, 30), -20, dtype=np.float32)
     window.prepare(values, 1600, 16000, ["vocals"])
+    window.receive_audio(MIXTURE_KEY, 0, np.zeros((2, 16000), dtype=np.float32))
     window.receive_audio("vocals", 0, np.zeros((2, 16000), dtype=np.float32))
     monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
     window.player.seek("vocals", 1.0)
@@ -288,6 +320,7 @@ def test_icon_and_spacebar_playback(application, monkeypatch):
     application.processEvents()
     QTest.keyClick(window, Qt.Key.Key_Space)
     assert window.player.stem == MIXTURE_KEY and not window.player.playing
+    window.receive_audio(MIXTURE_KEY, 0, np.zeros((2, 16000), dtype=np.float32))
     window.player.seek("vocals", 1.0)
     QTest.keyClick(window.pause_playback, Qt.Key.Key_Space)
     assert not window.player.playing
@@ -325,6 +358,9 @@ def test_stem_key_labels_and_backtick_mute(application, monkeypatch):
             QTest.keyClick(window, getattr(Qt.Key, f"Key_{number}"))
             assert button.isChecked()
         assert window.mute_all.text() == "Mute all (`)"
+        assert "~" not in window.mute_all.toolTip()
+        assert window.invert_button.text() == "Invert (~)"
+        assert "press ~ to invert playing stems" in window.invert_button.toolTip()
         assert not window.mute_shortcut.autoRepeat()
         assert "Toggle stems" not in window.findChild(QLabel, "infoHint").text()
         window.player.seek_time(.5)
@@ -340,8 +376,61 @@ def test_stem_key_labels_and_backtick_mute(application, monkeypatch):
         window.close()
 
 
+@pytest.mark.parametrize("modifiers", [Qt.KeyboardModifier.NoModifier, Qt.KeyboardModifier.ShiftModifier])
+def test_tilde_inverts_playback(application, monkeypatch, modifiers):
+    from app.tests.test_player import FakeSink
+
+    window = MainWindow()
+    try:
+        window.invert_playback()
+        assert not window.player.selected
+        stems = ["vocals", "bass", "drums", "other"]
+        window.prepare(np.full((513, 30), -20, dtype=np.float32), 1000, 4000, stems)
+        window.receive_audio(MIXTURE_KEY, 0, np.full((2, 4000), .8, dtype=np.float32))
+        for stem in stems:
+            window.receive_audio(stem, 0, np.full((2, 4000), .1, dtype=np.float32))
+        monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
+        window.show()
+        window.activateWindow()
+        window.pause_playback.setFocus()
+        application.processEvents()
+        window.player.select_stems(["vocals"])
+        window.player.seek_time(.5)
+        QTest.keyClick(window, Qt.Key.Key_AsciiTilde, modifiers)
+        assert set(window.player.selected) == {"bass", "drums", "other"}
+        assert not window.stem_buttons["vocals"].isChecked()
+        assert window.player.playing and window.player.position == 500
+        QTest.keyClick(window, Qt.Key.Key_AsciiTilde, modifiers)
+        assert window.player.selected == ("vocals",)
+        window.switch_playback(MIXTURE_KEY)
+        QTest.keyClick(window, Qt.Key.Key_AsciiTilde, modifiers)
+        assert not window.player.selected
+        assert window.player.playing and window.player.position == 500
+        QTest.keyClick(window, Qt.Key.Key_AsciiTilde, modifiers)
+        assert window.player.stem == MIXTURE_KEY
+        assert window.stem_buttons[MIXTURE_KEY].isChecked()
+        window.player.pause()
+        QTest.keyClick(window, Qt.Key.Key_AsciiTilde, modifiers)
+        assert not window.player.selected and not window.player.playing
+        assert window.player.position == 500
+        assert not window.invert_shortcut.autoRepeat()
+        window.input.setFocus()
+        window.input.clear()
+        QTest.keyClick(window.input, Qt.Key.Key_AsciiTilde, modifiers)
+        assert window.input.text() == "~"
+        assert not window.player.selected
+        window.prepare(np.full((513, 30), -20, dtype=np.float32), 1000, 4000, [])
+        window.invert_playback()
+        assert not window.player.selected
+        window.invert_playback()
+        assert window.player.stem == MIXTURE_KEY
+    finally:
+        window.close()
+
+
 def test_memory_display_follows_selection_and_ignores_stale_readings(application):
     window = MainWindow()
+    window.backend.setCurrentIndex(window.backend.findData("torch"))
     window.device.setCurrentText("cpu")
     window.update_memory(MemoryUsage("cpu", "cpu", 2_000_000_000, 40, detail="CPU detail"))
     assert "2.00 GB" in window.memory_status.text()
@@ -353,6 +442,24 @@ def test_memory_display_follows_selection_and_ignores_stale_readings(application
     assert window.memory_monitor.requested == "cuda:1"
     window.close()
     assert not window.memory_monitor.isRunning()
+
+
+def test_memory_display_tracks_coreml_backend(application):
+    window = MainWindow()
+    try:
+        window.device.setCurrentText("mps")
+        window.backend.setCurrentIndex(window.backend.findData("coreml"))
+        assert window.memory_monitor.backend == "coreml"
+        window.update_memory(MemoryUsage("mps", "mps", 2_000_000_000, backend="coreml"))
+        assert "2.00 GB" in window.memory_status.text()
+        window.update_memory(MemoryUsage("mps", "mps", 0))
+        assert "2.00 GB" in window.memory_status.text()
+        window.backend.setCurrentIndex(window.backend.findData("torch"))
+        assert window.memory_monitor.backend == "torch"
+        window.update_memory(MemoryUsage("mps", "mps", 2_000_000_000, backend="coreml"))
+        assert "reading" in window.memory_status.text()
+    finally:
+        window.close()
 
 
 @pytest.mark.parametrize("config_exists,checkpoint_exists", [(True, True), (True, False), (False, True), (False, False)])
@@ -441,15 +548,7 @@ def test_worker_real_inference_and_export(application, tmp_path, monkeypatch, co
         np.testing.assert_array_equal(audio.T, expected[list(config.training.instruments).index(stem)])
         streamed = [chunk for name, start, chunk in chunks if name == stem]
         np.testing.assert_array_equal(np.concatenate(streamed, axis=-1).T, audio)
-    mixture_audio = sf.read(source, dtype="float32", always_2d=True)[0].T
-    residual = mixture_audio - sum(sf.read(path, dtype="float32", always_2d=True)[0].T for path in paths)
-    expected_null = Spectrogram(residual.shape[-1])
-    expected_null.append(residual)
-    actual_null = np.full_like(expected_null.values, -90)
-    for stem, first, values in updates:
-        if stem == NULL_KEY:
-            actual_null[:, first:first + values.shape[1]] = values
-    np.testing.assert_allclose(actual_null, expected_null.values, atol=1e-3)
+    assert {stem for stem, first, values in updates} == {"vocals", "bass", "drums", "other"}
 
 
 def test_click_maps_zoomed_spectrogram_time(application, monkeypatch):
@@ -529,18 +628,17 @@ def test_stem_tabs_mix_and_spectrograms_only_seek(application, monkeypatch):
         window.stem_buttons["vocals"].click()
         assert not window.stem_buttons[MIXTURE_KEY].isChecked()
         assert not window.stem_buttons["vocals"].isChecked()
-        assert window.stem_buttons[NULL_KEY].isChecked()
-        assert set(window.player.selected) == {"bass", "drums", "other", NULL_KEY}
+        assert set(window.player.selected) == {"bass", "drums", "other"}
         assert window.player.playing and window.player.position == 500
-        np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32), .7, atol=1e-6)
+        np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32), .3, atol=1e-6)
         selected = window.player.selected
         window.cards["vocals"].seek_requested.emit("vocals", 1.5)
         assert window.player.selected == selected and window.player.position == 1500
-        window.cards[NULL_KEY].seek_requested.emit("Null", 1.5)
+        window.cards["drums"].seek_requested.emit("drums", 1.5)
         assert window.player.selected == selected and window.player.position == 1500
         window.stem_buttons["vocals"].click()
         assert all(button.isChecked() for button in window.stem_buttons.values())
-        for stem in [*stems, NULL_KEY]:
+        for stem in stems:
             window.stem_buttons[stem].click()
         assert not window.player.selected and window.player.playing
         window.player.pause()
@@ -612,29 +710,64 @@ def test_worker_precision_follows_checkpoint(monkeypatch, dtype, expected):
     assert precisions == [f"PyTorch · {expected}"]
 
 
-def test_worker_automatically_loads_coreml(monkeypatch):
+@pytest.mark.parametrize("device", ["cpu", "mps"])
+def test_worker_loads_coreml_with_selected_dsp(monkeypatch, device):
     calls = []
     precisions = []
-    monkeypatch.setattr("app.gui.use_coreml", lambda *args: True)
+    closed = []
+    def select_backend(backend, *args):
+        assert backend == "coreml"
+        return True
+
+    monkeypatch.setattr("app.gui.use_coreml", select_backend)
+    monkeypatch.setattr("app.gui.resolve_device", lambda requested: torch.device(device))
     monkeypatch.setattr("app.gui.resolve_pretrained_paths", lambda *args, **kwargs: pytest.fail("PyTorch download"))
 
     def load(**kwargs):
         assert kwargs["local_files_only"] is True
         assert callable(kwargs["download_progress"])
-        return build_model(tiny_config()), tiny_config()
+        assert kwargs["dsp_device"] == device
+        model = build_model(tiny_config())
+        model.close = lambda: closed.append(True)
+        return model, tiny_config()
 
     def stop_at_audio(*args):
         raise RuntimeError("stop before audio")
 
-    monkeypatch.setattr("app.gui.load_coreml_separator", load)
+    monkeypatch.setattr("app.gui.load_coreml_process", load)
     monkeypatch.setattr("app.gui.load_audio", stop_at_audio)
-    worker = InferenceWorker({"config": "", "checkpoint": "", "device": "auto", "offline": True, "input": "song.wav"})
+    worker = InferenceWorker({"config": "", "checkpoint": "", "device": "auto", "backend": "coreml", "offline": True, "input": "song.wav"})
     worker.status.connect(calls.append)
     worker.precision_changed.connect(precisions.append)
     with pytest.raises(RuntimeError, match="stop before audio"):
         worker.process()
-    assert "Core ML · FP16" in calls[-1]
+    assert f"Core ML + {device.upper()} DSP · FP16" in calls[-1]
     assert precisions == ["Core ML · FP16"]
+    assert closed == [True]
+
+
+@pytest.mark.parametrize("system,version,expected", [
+    ("darwin", "15.0", "coreml"), ("darwin", "26.6", "coreml"),
+    ("darwin", "14.7", "torch"), ("linux", "", "torch"), ("win32", "", "torch"),
+])
+def test_backend_selection_reaches_worker(application, tmp_path, monkeypatch, system, version, expected):
+    monkeypatch.setattr("app.gui.sys", SimpleNamespace(platform=system))
+    monkeypatch.setattr("app.gui.platform.mac_ver", lambda: (version, (), ""))
+    audio = tmp_path / "mixture.wav"
+    sf.write(audio, np.zeros((128, 2), dtype=np.float32), 1600)
+    window = MainWindow()
+    calls = []
+    monkeypatch.setattr(window, "launch", calls.append)
+    try:
+        assert window.backend.currentData() == expected
+        window.input.setText(str(audio))
+        window.backend.setCurrentIndex(window.backend.findData("coreml"))
+        window.device.setCurrentText("mps")
+        window.separate()
+        assert calls[0]["backend"] == "coreml"
+        assert calls[0]["device"] == "mps"
+    finally:
+        window.close()
 
 
 def test_precision_info_persists_and_resets(application, monkeypatch):
@@ -683,6 +816,30 @@ def test_artifact_progress_bar_and_separation_reset(application):
         window.prepare(np.full((513, 30), -90, dtype=np.float32), 1600, 1600, ["vocals"])
         assert window.progress.maximum() == 100 and window.progress.value() == 0
         assert window.progress.format() == "Separation · %p%"
+    finally:
+        window.close()
+
+
+def test_download_eta_ignores_cached_initial_bytes(application, monkeypatch):
+    window = MainWindow()
+    now = [0.0]
+    monkeypatch.setattr("app.gui.time.monotonic", lambda: now[0])
+    try:
+        window.update_artifact_progress("Core ML model", 0, None)
+        assert "estimating" in window.timing_status.text()
+        now[0] = 1
+        window.update_artifact_progress("Core ML model", 50, 100)
+        assert "estimating" in window.timing_status.text()
+        now[0] = 3
+        window.update_artifact_progress("Core ML model", 75, 100)
+        assert window.progress.value() == 75
+        assert window.timing_status.text() == "Download 00:03 · ETA 00:02"
+        window.update_artifact_progress("Core ML model", 100, 100)
+        assert "ETA 00:00" in window.timing_status.text()
+        window.update_phase("Loading model")
+        assert "ETA —" in window.timing_status.text()
+        window.update_artifact_progress("another model", 0, None)
+        assert "estimating" in window.timing_status.text()
     finally:
         window.close()
 
@@ -815,7 +972,7 @@ def test_fit_all_keeps_every_card_visible_and_preserves_data(application):
         window.spectrogram_layout.setCurrentText(mode)
         application.processEvents()
         assert window.cards == cards
-        assert window.plots.count() == 6
+        assert window.plots.count() == 5
         np.testing.assert_array_equal(window.cards[MIXTURE_KEY].values, mixture)
         if mode == "Fit all":
             viewport = window.spectrogram_scroll.viewport()
