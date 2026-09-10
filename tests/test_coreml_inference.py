@@ -16,6 +16,29 @@ def test_default_artifact_is_fp16():
     assert coreml_inference.COREML_DIRECTORY == "coreml/base-4stem-fp16-v1"
 
 
+def test_snapshot_reports_bytes_not_file_counts_or_transfer_bytes(tmp_path, monkeypatch):
+    directory = tmp_path / coreml_inference.COREML_DIRECTORY
+    directory.mkdir(parents=True)
+    (directory / "data").write_bytes(bytes(100))
+
+    def download(**kwargs):
+        progress = kwargs["tqdm_class"]
+        with progress(total=7, desc="Fetching 7 files") as bar:
+            bar.update(1)
+        with progress(total=100, unit="B", desc="Downloading bytes") as bar:
+            bar.update(80)
+        with progress(total=100, unit="B", desc="Reconstructing (incomplete total...)", disable=True) as bar:
+            bar.update(25)
+            bar.update(50)
+        return str(tmp_path)
+
+    monkeypatch.setattr(coreml_inference, "snapshot_download", download)
+    updates = []
+    assert coreml_inference.resolve_coreml_artifact(download_progress=lambda *args: updates.append(args)) == directory
+    assert updates == [("Core ML model", 0, None), ("Core ML model", 25, 100),
+                       ("Core ML model", 75, 100), ("Core ML model", 100, 100)]
+
+
 @pytest.mark.parametrize("module,expected", [("RMSNorm", False), ("RMSNorm2d", False), ("GRN", False), ("Linear", True), ("Conv2d", True)])
 def test_export_preserves_normalization_precision(module, expected):
     from export_coreml import use_fp16_for_op
@@ -38,20 +61,24 @@ def test_export_waveform_validation():
 
 
 @pytest.mark.parametrize("precision", ["auto", "fp16", "fp32", "bf16"])
-def test_cli_coreml_precision(tmp_path, monkeypatch, precision):
+@pytest.mark.parametrize("device", ["auto", "cpu", "mps"])
+def test_cli_coreml_precision(tmp_path, monkeypatch, precision, device):
     config = tiny_config()
     config.model.num_stems = 4
     monkeypatch.setattr(coreml_inference, "use_coreml", lambda *args: True)
-    monkeypatch.setattr(coreml_inference, "load_coreml_separator", lambda **kwargs: (build_model(config).eval(), config))
+    calls = []
+    monkeypatch.setattr(coreml_inference, "load_coreml_separator", lambda **kwargs:
+                        calls.append(kwargs) or (build_model(config).eval(), config))
     monkeypatch.setattr(inference, "resolve_amp_dtype", lambda *args: pytest.fail("Core ML DSP must not use autocast"))
     audio_path = tmp_path / "audio.wav"
     sf.write(audio_path, np.zeros((128, 2), dtype=np.float32), 1600)
     if precision in {"fp32", "bf16"}:
         with pytest.raises(ValueError, match="compiled FP16"):
-            inference.separate_file(None, None, str(audio_path), str(tmp_path / "out"), precision=precision)
+            inference.separate_file(None, None, str(audio_path), str(tmp_path / "out"), precision=precision, device=device)
     else:
-        paths = inference.separate_file(None, None, str(audio_path), str(tmp_path / "out"), precision=precision)
+        paths = inference.separate_file(None, None, str(audio_path), str(tmp_path / "out"), precision=precision, device=device)
         assert len(paths) == 4 and all(path.is_file() for path in paths)
+        assert calls[0]["dsp_device"] == ("mps" if device == "mps" else "cpu")
 
 
 @pytest.mark.parametrize("system,version,device,custom,expected", [
@@ -83,7 +110,11 @@ def test_explicit_backend_errors(monkeypatch):
         coreml_inference.use_coreml("coreml", "auto", checkpoint_path="custom.pt")
 
 
-def test_hybrid_waveform_and_batched_streaming():
+@pytest.mark.parametrize("dsp_device", ["cpu", "mps"])
+def test_hybrid_waveform_and_batched_streaming(dsp_device):
+    if dsp_device == "mps" and (not torch.backends.mps.is_available()
+                               or torch.torch_version.TorchVersion(torch.__version__) < "2.14"):
+        pytest.skip("MPS DSP requires PyTorch 2.14 and MPS hardware")
     config = tiny_config()
     config.model.num_stems = 4
     reference = build_model(config).eval()
@@ -95,7 +126,10 @@ def test_hybrid_waveform_and_batched_streaming():
         calls.append(features.shape[0])
         return {"mask": reference.predict_mask(features).numpy()}
 
-    model = coreml_inference.CoreMLSeparator(SimpleNamespace(predict=predict), config, reference.sb_filter.state_dict()).eval()
+    model = coreml_inference.CoreMLSeparator(SimpleNamespace(predict=predict), config,
+                                           reference.sb_filter.state_dict(), dsp_device=dsp_device).eval()
+    assert next(model.parameters()).device.type == "cpu"
+    assert model.dsp.sb_filter.w.device.type == dsp_device
     audio = np.random.default_rng(0).normal(0, 0.05, (2, 279)).astype(np.float32)
     expected = inference.separate_audio(reference, audio, config, batch_size=2)
     chunks = []
@@ -108,7 +142,8 @@ def test_hybrid_waveform_and_batched_streaming():
         model(torch.zeros(1, 2, 17))
 
 
-def test_snapshot_loading_without_checkpoint(tmp_path, monkeypatch):
+@pytest.mark.parametrize("dsp_device", ["cpu", "mps"])
+def test_snapshot_loading_without_checkpoint(tmp_path, monkeypatch, dsp_device):
     import sys
 
     directory = tmp_path / coreml_inference.COREML_DIRECTORY
@@ -117,7 +152,9 @@ def test_snapshot_loading_without_checkpoint(tmp_path, monkeypatch):
     calls = []
     compiled = object()
     monkeypatch.setattr(coreml_inference, "snapshot_download", lambda **kwargs: calls.append(kwargs) or str(tmp_path))
-    monkeypatch.setattr(coreml_inference, "CoreMLSeparator", lambda model, config, state: SimpleNamespace(eval=lambda: model))
+    devices = []
+    monkeypatch.setattr(coreml_inference, "CoreMLSeparator", lambda model, config, state, **kwargs:
+                        devices.append(kwargs["dsp_device"]) or SimpleNamespace(eval=lambda: model))
     monkeypatch.setattr(coreml_inference, "load_file", lambda path: {})
     monkeypatch.setitem(sys.modules, "coremltools", SimpleNamespace(
         models=SimpleNamespace(CompiledMLModel=lambda path, **kwargs: compiled),
@@ -127,7 +164,9 @@ def test_snapshot_loading_without_checkpoint(tmp_path, monkeypatch):
     model, _ = coreml_inference.load_coreml_separator(
         repo_id="owner/repo", revision="commit", cache_dir=tmp_path, local_files_only=True,
         download_progress=lambda *args: progress.append(args),
+        dsp_device=dsp_device,
     )
+    assert devices == [dsp_device]
     assert model is compiled
     assert calls[0]["local_files_only"] and calls[0]["revision"] == "commit"
     assert calls[0]["repo_id"] == "owner/repo"
@@ -135,8 +174,23 @@ def test_snapshot_loading_without_checkpoint(tmp_path, monkeypatch):
     assert progress[0][2] is None and progress[-1][1] == progress[-1][2]
 
 
-def test_load_separator_routes_without_pytorch_download(monkeypatch):
+@pytest.mark.parametrize("device,expected", [("auto", "cpu"), ("cpu", "cpu"), ("mps", "mps")])
+def test_load_separator_routes_without_pytorch_download(monkeypatch, device, expected):
     monkeypatch.setattr(coreml_inference, "use_coreml", lambda *args: True)
-    monkeypatch.setattr(coreml_inference, "load_coreml_separator", lambda **kwargs: ("compiled", "config"))
+    calls = []
+    monkeypatch.setattr(coreml_inference, "load_coreml_separator", lambda **kwargs: calls.append(kwargs) or ("compiled", "config"))
     monkeypatch.setattr(inference, "resolve_pretrained_paths", lambda *args, **kwargs: pytest.fail("Checkpoint download"))
-    assert inference.load_separator(device="auto") == ("compiled", "config")
+    assert inference.load_separator(device=device) == ("compiled", "config")
+    assert calls[0]["dsp_device"] == expected
+
+
+def test_dsp_device_validation(monkeypatch):
+    with pytest.raises(ValueError, match="cpu or mps"):
+        coreml_inference.CoreMLSeparator(None, None, dsp_device="cuda")
+    monkeypatch.setattr(torch, "__version__", "2.7.0")
+    with pytest.raises(ValueError, match="2.14"):
+        coreml_inference.CoreMLSeparator(None, None, dsp_device="mps")
+    monkeypatch.setattr(torch, "__version__", "2.14.0")
+    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: False)
+    with pytest.raises(ValueError, match="available MPS"):
+        coreml_inference.CoreMLSeparator(None, None, dsp_device="mps")
