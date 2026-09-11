@@ -9,13 +9,13 @@ from model import (
     DEFAULT_GLOBAL_BS_FREQS_PER_BAND,
     GELUFeedForward,
     GEGLUFusion,
-    SiLUFusion,
     LinearFusion,
     MultiplicativeFusion,
     NoSkipFusion,
     RMSNorm,
     RaggedBandLinear,
     RaggedBandMaskEstimator,
+    SiLUFusion,
     SwiGLU,
     TimeMixBlock,
     TransformerBlock,
@@ -56,9 +56,11 @@ def test_sbroformer_forward_shape_and_finiteness():
     assert torch.isfinite(output).all()
 
 
-def test_sbroformer_joint_four_stem_forward_backward():
+@pytest.mark.parametrize("fusion_type", ["geglu", "silu"])
+def test_sbroformer_joint_four_stem_forward_backward(fusion_type):
     config = tiny_config(target_instrument=None)
     config.model.num_stems = 4
+    config.model.fusion_type = fusion_type
     model = build_model(config)
     audio = torch.randn(1, 2, 128)
 
@@ -240,6 +242,7 @@ def test_skip_fusion_ablation_forward_backward(fusion_type, fusion_class):
 def test_silu_fusion_matches_training_gate_and_checkpoint_keys():
     fusion = SiLUFusion(dim=4)
     fusion.load_state_dict(GEGLUFusion(dim=4).state_dict(), strict=True)
+    assert isinstance(fusion.act, torch.nn.SiLU)
     decoder = torch.randn(2, 4, 3, 5)
     encoder = torch.randn_like(decoder)
     combined = torch.cat([fusion.norm_dec(decoder), fusion.norm_enc(encoder)], dim=1)

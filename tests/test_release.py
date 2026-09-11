@@ -12,6 +12,18 @@ def test_release_contains_only_base_configs():
     assert {path.name for path in (root / "configs").glob("*.yaml")} == expected
 
 
+def test_release_silu_config_contract():
+    root = Path(__file__).resolve().parents[1]
+    base = load_config(str(root / "configs" / "sbroformer_base_4stem.yaml"))
+    config = load_config(str(root / "configs" / "sbroformer_base_4stem_silu.yaml"))
+    assert "extends" not in config
+    assert config.model.fusion_type == "silu"
+    assert config.training.output_dir == "checkpoints/sbroformer_base_4stem_silu"
+    del config.model.fusion_type
+    config.training.output_dir = base.training.output_dir
+    assert config == base
+
+
 def test_release_four_stem_config_contract():
     root = Path(__file__).resolve().parents[1]
     config = load_config(str(root / "configs" / "sbroformer_base_4stem.yaml"))
