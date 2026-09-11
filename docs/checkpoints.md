@@ -1,4 +1,29 @@
-# Base four-stem checkpoint: 1,400,000 updates
+# Checkpoints
+
+[← SubRoformer](../README.md)
+
+Both released models separate vocals, bass, drums, and other at 48 kHz.
+Download weights from [Hugging Face](https://huggingface.co/archimickey/SubRoformer/tree/main/checkpoints)
+and keep each checkpoint paired with its matching config:
+
+| Model | FP16 checkpoint (under `checkpoints/`) | Config (under `configs/`) |
+| --- | --- | --- |
+| Original Base, 1.4M EMA | `subroformer_base_4stem_1400000_ema_fp16.safetensors` | `sbroformer_base_4stem.yaml` (GEGLU) |
+| Perceptual-finetuned, +200k EMA (default) | `subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors` | `sbroformer_base_4stem_silu.yaml` (SiLU) |
+
+The default app/CLI download is the perceptual-finetuned model. To use the
+original Base model, download its weights first and pass both local paths;
+missing paths fall back to the default perceptual artifacts, not the original
+Base model. See [inference](inference.md) for commands and loading rules.
+
+The perceptual model adds 200k finetuning updates to the 1.4M EMA. Its evaluated
+EMA `.pt` copy has SHA-256
+`b96bcf33296f8dfca7b0e81c3745f25a589564594b546537f4e202da3b67cf32`.
+This checksum identifies the source EMA, not the FP16 export. See the
+[test SDR table](../README.md#checkpoints-and-test-sdr) and
+[evaluation protocol](evaluation.md#published-test-results) for both models.
+
+## Original Base checkpoint: 1,400,000 updates
 
 - File: `checkpoints/subroformer_base_4stem_1400000_ema.pt`
 - Config: `configs/sbroformer_base_4stem.yaml`
@@ -21,7 +46,7 @@
 Use the same config, sample rate, and output order as the PyTorch copy. This is
 an inference-weight export, not resumable optimizer state or a new SDR evaluation.
 
-## FP16 inference copy (default)
+## Original Base FP16 inference copy
 
 - File: `checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors`.
 - Size: 207,349,744 bytes (FP32 copy: 414,655,864 bytes).
@@ -37,7 +62,7 @@ an inference-weight export, not resumable optimizer state or a new SDR evaluatio
 - A fresh-cache default download matches the local checksum and config; MPS
   inference with the configured 96,000-sample chunk also returns finite stems.
 
-The default resolver now selects this FP16 copy. App precision follows the
+This was the default before the perceptual-finetuned release. App precision follows the
 checkpoint, with no precision selector or automatic FP32 CPU fallback. RMSNorm
 statistics use FP32 to prevent FP16 square overflow on CPU. Complex DSP
 operations and overlap-add accumulation retain full precision where needed.
