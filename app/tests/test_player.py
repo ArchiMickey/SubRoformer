@@ -7,7 +7,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 from PySide6.QtCore import QCoreApplication
-from PySide6.QtMultimedia import QtAudio
+from PySide6.QtMultimedia import QAudioFormat, QtAudio
 
 from app.player import MIXTURE_KEY, StemAudio, StemPlayer
 
@@ -229,3 +229,79 @@ def test_disk_read_failure_stops_playback(player, monkeypatch):
     player.seek("vocals", 0)
     assert not player.playing and player.sink is None
     assert errors == ["Unable to read playback audio: disk unavailable"]
+
+
+@pytest.mark.parametrize("sample_format,dtype,expected", [
+    (QAudioFormat.SampleFormat.Float, np.float32, .25),
+    (QAudioFormat.SampleFormat.UInt8, np.uint8, 160),
+    (QAudioFormat.SampleFormat.Int16, np.int16, 8192),
+    (QAudioFormat.SampleFormat.Int32, np.int32, 536870912),
+])
+def test_unsupported_format_uses_device_preference(player, monkeypatch, sample_format, dtype, expected):
+    from app import player as player_module
+
+    preferred = QAudioFormat()
+    preferred.setSampleRate(44100)
+    preferred.setChannelCount(2)
+    preferred.setSampleFormat(sample_format)
+
+    class Device:
+        def isNull(self):
+            return False
+
+        def isFormatSupported(self, audio_format):
+            return audio_format == preferred
+
+        def preferredFormat(self):
+            return preferred
+
+    monkeypatch.setattr(player_module.QMediaDevices, "defaultAudioOutput", Device)
+    monkeypatch.setattr(player_module, "QAudioSink", lambda *args: FakeSink())
+    monkeypatch.setattr(player, "create_sink", StemPlayer.create_sink.__get__(player))
+    player.reset(48000, ["vocals"])
+    player.append("vocals", 0, np.full((1, 48000), .25, dtype=np.float32))
+    player.seek("vocals", .25)
+    sink = player.sink
+    for step in range(100):
+        player.tick()
+    audio = np.frombuffer(sink.writes, dtype=dtype).reshape(-1, 2)
+    assert len(audio) == 33075
+    np.testing.assert_array_equal(audio[:, 0], audio[:, 1])
+    np.testing.assert_allclose(audio[100:-100], expected, rtol=.002, atol=1e-4)
+    sink.processed = 100000
+    player.pause()
+    assert player.position == 16800
+    player.resume()
+    assert player.sink is sink
+    sink.processed = 750000
+    sink.current_state = QtAudio.State.IdleState
+    player.tick()
+    assert player.position == 48000 and not player.playing
+
+
+@pytest.mark.parametrize("output_rate", [24000, 44100, 96000])
+def test_resampling_chunks_match_single_conversion(player, output_rate):
+    from scipy.signal import resample_poly
+
+    player.reset(48000, ["vocals"])
+    audio = np.random.default_rng(12).uniform(-.2, .2, (2, 48000)).astype(np.float32)
+    player.append("vocals", 0, audio)
+    player.select_stems(["vocals"])
+    player.origin = 0
+    player.output_format = QAudioFormat()
+    player.output_format.setSampleRate(output_rate)
+    player.output_format.setChannelCount(1)
+    player.output_format.setSampleFormat(QAudioFormat.SampleFormat.Float)
+    converted = b"".join(player.output_samples(first, min(first + 733, output_rate)) for first in range(0, output_rate, 733))
+    expected = resample_poly(audio.T, output_rate, 48000, axis=0).mean(axis=1)
+    np.testing.assert_allclose(np.frombuffer(converted, np.float32), expected, atol=1e-7)
+
+
+def test_partial_unaligned_writes_preserve_pcm(player, monkeypatch):
+    original_write = FakeSink.write
+    monkeypatch.setattr(FakeSink, "write", lambda sink, data: original_write(sink, data[:317]))
+    player.seek("vocals", 0)
+    for step in range(100):
+        player.tick()
+    assert len(player.sink.writes) == 8000
+    np.testing.assert_array_equal(np.frombuffer(player.sink.writes, np.float32), .25)
