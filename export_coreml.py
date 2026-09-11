@@ -26,7 +26,7 @@ class MaskNetwork(torch.nn.Module):
 
 def use_fp16_for_op(op):
     return not any(
-        module in {"RMSNorm", "RMSNorm2d", "GRN"}
+        module in {"RMSNorm", "RMSNorm2d", "GRN", "TimeMixBlock"}
         for scopes in op.scopes.values() for module in scopes
     )
 
@@ -46,7 +46,7 @@ def main():
     import coremltools as ct
 
     parser = argparse.ArgumentParser(description="Compile the Base mask network for Core ML")
-    parser.add_argument("--output", type=Path, default=Path("artifacts/coreml-fp16"))
+    parser.add_argument("--output", type=Path, default=Path("artifacts/coreml-perceptual-200k-fp16"))
     parser.add_argument("--validation-audio", type=Path, required=True)
     parser.add_argument("--upload", action="store_true", help="Publish validated runtime artifacts to the default HF repo")
     args = parser.parse_args()
@@ -106,11 +106,15 @@ def main():
         "feature_shape": list(features.shape), "chunk_size": samples,
         "mask_relative_rms": relative_rms, "coremltools": ct.__version__,
         "torch": torch.__version__, "precision": "float16",
-        "fp32_modules": ["RMSNorm", "RMSNorm2d", "GRN"],
+        "fp32_modules": ["RMSNorm", "RMSNorm2d", "GRN", "TimeMixBlock"],
         "waveform_relative_rms": errors,
         "waveform_absolute_rms": absolute_errors,
         "waveform_rms_tolerance": {"relative": 0.001, "absolute_floor": 1e-6},
         "checkpoint_sha256": hashlib.sha256(checkpoint_path.read_bytes()).hexdigest(),
+        "checkpoint_filename": checkpoint_path.name,
+        "config_sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+        "config_filename": config_path.name,
+        "fusion_type": model.fusion_type,
     }, indent=2) + "\n")
     if args.upload:
         from huggingface_hub import HfApi
@@ -118,7 +122,7 @@ def main():
         commit = HfApi().upload_folder(
             repo_id=DEFAULT_REPO_ID, folder_path=args.output, path_in_repo=COREML_DIRECTORY,
             allow_patterns=["mask.mlmodelc/**", "config.yaml", "dsp.safetensors", "conversion.json"],
-            commit_message="Add validated macOS 15+ FP16 Core ML Base mask network and exact DSP buffers",
+            commit_message="Add validated FP16 Core ML perceptual 200k mask network and exact DSP buffers",
         )
         print("Uploaded:", commit.commit_url, flush=True)
 

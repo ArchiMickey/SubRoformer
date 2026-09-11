@@ -24,7 +24,7 @@ executable = EXE(
     analysis.scripts,
     [],
     exclude_binaries=True,
-    name="SubRoformer",
+    name="SubStemStudio",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -38,12 +38,12 @@ collection = COLLECT(
     analysis.datas,
     strip=False,
     upx=False,
-    name="SubRoformer",
+    name="SubStemStudio",
 )
 if sys.platform == "darwin":
     bundle = BUNDLE(
         collection,
-        name="SubRoformer.app",
+        name="SubStemStudio.app",
         icon=str(root / "app" / "assets" / "subroformer-icon.icns"),
         bundle_identifier="com.archimickey.subroformer",
         info_plist={

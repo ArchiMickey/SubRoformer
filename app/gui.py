@@ -323,7 +323,7 @@ class MainWindow(QMainWindow):
         self.stem_buttons = {}
         self.export_path = None
         self.player = StemPlayer(self)
-        self.setWindowTitle("SubRoformer · Stem Studio")
+        self.setWindowTitle("SubStemStudio")
         self.setAcceptDrops(True)
         self.setWindowIcon(QIcon(str(Path(__file__).parent / "assets" / "subroformer-icon.png")))
         self.playback_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
@@ -335,6 +335,12 @@ class MainWindow(QMainWindow):
             shortcut.setAutoRepeat(False)
             shortcut.activated.connect(lambda stem=stem: self.switch_playback(stem))
             self.stem_shortcuts.append(shortcut)
+        self.solo_shortcuts = []
+        for number, stem in enumerate(PLAYBACK_KEYS[1:], 2):
+            shortcut = QShortcut(QKeySequence(f"Shift+{number}"), self)
+            shortcut.setAutoRepeat(False)
+            shortcut.activated.connect(lambda stem=stem: self.switch_playback(stem, solo=True))
+            self.solo_shortcuts.append(shortcut)
         self.resize(1180, 860)
         root = QWidget()
         self.setCentralWidget(root)
@@ -349,7 +355,7 @@ class MainWindow(QMainWindow):
         sidebar = QVBoxLayout(config_pane)
         sidebar.setContentsMargins(0, 0, 8, 0)
         self.pane_splitter.addWidget(config_pane)
-        heading = QLabel("SubRoformer")
+        heading = QLabel("SubStemStudio")
         heading.setObjectName("heading")
         sidebar.addWidget(heading)
         sidebar.addWidget(QLabel("STEM STUDIO  /  LOCAL INFERENCE"))
@@ -359,7 +365,7 @@ class MainWindow(QMainWindow):
         form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
         self.input = self.path_field(form, "01  Mixture", "Choose or drop an audio file…", "audio")
         self.output = self.path_field(form, "02  Export folder", "Choose folder…", "directory")
-        self.output.setText(str(Path.home() / "Music" / "SubRoformer"))
+        self.output.setText(str(Path.home() / "Music" / "SubStemStudio"))
         self.backend = QComboBox()
         self.backend.addItem("PyTorch", "torch")
         self.backend.addItem("Core ML", "coreml")
@@ -396,15 +402,12 @@ class MainWindow(QMainWindow):
         self.start = QPushButton("Separate stems")
         self.start.setObjectName("primary")
         self.start.clicked.connect(self.separate)
-        sidebar.addWidget(self.start)
         self.cancel = QPushButton("Cancel")
         self.cancel.setEnabled(False)
         self.cancel.clicked.connect(self.stop)
-        sidebar.addWidget(self.cancel)
         self.open_output = QPushButton("Open exported stems ↗")
         self.open_output.setEnabled(False)
         self.open_output.clicked.connect(self.open_export)
-        sidebar.addWidget(self.open_output)
         main_pane = QWidget()
         main_pane.setMinimumWidth(400)
         content = QVBoxLayout(main_pane)
@@ -441,6 +444,9 @@ class MainWindow(QMainWindow):
             button.setCheckable(True)
             button.setEnabled(False)
             button.clicked.connect(lambda checked, stem=key: self.switch_playback(stem))
+            if key != MIXTURE_KEY:
+                button.installEventFilter(self)
+                button.setToolTip(f"Shift-click or press Shift+{number} to listen to only this stem.")
             self.stem_buttons[key] = button
             self.stem_tabs.addWidget(button)
         self.mute_all = QPushButton("Mute all (`)")
@@ -503,11 +509,15 @@ class MainWindow(QMainWindow):
         self.pause_playback.setToolTip("Play / pause the selected audio (Space)")
         playback.addWidget(self.pause_playback)
         self.pause_playback.setMinimumWidth(80)
+        playback.addWidget(self.start)
+        playback.addWidget(self.cancel)
+        playback.addWidget(self.open_output)
+        playback.addStretch()
+        status_layout.addLayout(playback)
         self.playback_status = QLabel("Click any spectrogram to listen from that point")
         self.playback_status.setWordWrap(True)
         self.playback_status.setObjectName("playbackSummary")
-        playback.addWidget(self.playback_status, 1)
-        status_layout.addLayout(playback)
+        status_layout.addWidget(self.playback_status)
         shortcut_hint = QLabel("Space  Play / pause    ·    Click a spectrogram to seek")
         shortcut_hint.setObjectName("infoHint")
         shortcut_hint.setWordWrap(True)
@@ -739,6 +749,15 @@ class MainWindow(QMainWindow):
             card.setFixedHeight(height)
 
     def eventFilter(self, watched, event):
+        if (event.type() == QEvent.Type.MouseButtonRelease
+                and event.button() == Qt.MouseButton.LeftButton
+                and event.modifiers() & Qt.KeyboardModifier.ShiftModifier):
+            for stem, button in self.stem_buttons.items():
+                if watched is button and button.isEnabled() and button.isDown():
+                    button.setDown(False)
+                    if button.rect().contains(event.position().toPoint()):
+                        self.switch_playback(stem, solo=True)
+                    return True
         if event.type() == QEvent.Type.Wheel and watched in getattr(self, "settings_wheel_targets", ()):
             scrollbar = self.settings_scroll.verticalScrollBar()
             if event.pixelDelta().y():
@@ -842,11 +861,13 @@ class MainWindow(QMainWindow):
         selected = components if MIXTURE_KEY in self.player.selected else set(self.player.selected)
         self.player.select_stems(components - selected)
 
-    def switch_playback(self, stem):
+    def switch_playback(self, stem, solo=False):
         if stem not in self.player.buffers:
             return
         selected = set(self.player.selected)
-        if stem == MIXTURE_KEY:
+        if solo and stem != MIXTURE_KEY:
+            selected = {stem}
+        elif stem == MIXTURE_KEY:
             selected = set(self.player.buffers) - {MIXTURE_KEY} or {MIXTURE_KEY}
         elif MIXTURE_KEY in selected:
             selected = set(self.player.buffers) - {MIXTURE_KEY, stem}
@@ -1010,6 +1031,8 @@ STYLE += "\n".join(
 
 def main():
     app = QApplication(sys.argv)
+    app.setApplicationName("SubStemStudio")
+    app.setApplicationDisplayName("SubStemStudio")
     app.setStyle("Fusion")
     app.setStyleSheet(STYLE)
     window = MainWindow()

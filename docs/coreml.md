@@ -5,11 +5,15 @@ MPS selected when available. CLI/API defaults remain PyTorch, including for
 `--backend auto`; CLI automatic precision uses FP16 on MPS. Core ML is selected
 explicitly in the CLI/API on macOS 15+ via `--backend coreml`
 or `load_separator(device="auto", backend="coreml")`. It downloads the compiled
-Base mask network from `archimickey/SubRoformer`, under
-`coreml/base-4stem-fp16-v1/`. Custom config/checkpoint pairs require PyTorch.
+200k perceptual-finetuned Base mask network from `archimickey/SubRoformer`, under
+`coreml/base-4stem-perceptual-200k-fp16-v1/`. Its matching config is
+`configs/sbroformer_base_4stem_silu.yaml`: SiLU fusion is required, not GEGLU.
+Both PyTorch and Core ML default to this finetuned model; backend selection
+is unchanged. Custom config/checkpoint pairs require PyTorch.
 
 This is a hybrid backend: the learned mask network runs in Core ML at FP16
-with RMSNorm, RMSNorm2d, and GRN kept in FP32 for numerical stability;
+with RMSNorm, RMSNorm2d, GRN, and the small TimeMix blocks kept in FP32
+for numerical stability, including quiet tails;
 complex-valued subband analysis, STFT, and synthesis run in PyTorch, on CPU by
 default. With PyTorch 2.14+, explicitly select `--device mps` to run this DSP on
 the GPU as well. Rolling overlap-add and public audio tensors remain on CPU.
@@ -17,8 +21,9 @@ Exact DSP buffers from the source checkpoint are bundled
 in `dsp.safetensors`. No full PyTorch checkpoint is downloaded for this backend.
 Core ML uses `CPU_AND_GPU`; this is not an Apple Neural Engine deployment, nor
 a claim of improved speed. Core ML schedules supported operations itself.
-The earlier FP32 artifact remains under `coreml/base-4stem-v1/`; it is not the
-default and is not downloaded by the FP16 backend. DSP and public audio tensors
+The earlier Base artifacts remain under `coreml/base-4stem-v1/` (FP32) and
+`coreml/base-4stem-fp16-v1/` (FP16); neither is the default or downloaded by
+the current backend. DSP and public audio tensors
 remain FP32; only the compiled neural network uses FP16. For the CLI, use
 `--precision auto` or `--precision fp16`; requesting FP32/BF16 requires PyTorch.
 
@@ -53,6 +58,7 @@ PyTorch checkpoint (use the application runtime, not the older converter venv):
 ```sh
 .venv/bin/python benchmarks/benchmark_coreml_dsp.py \
   --validation-audio /path/to/stereo-music.wav \
+  --artifact artifacts/coreml-perceptual-200k-fp16 \
   --output artifacts/coreml-dsp-benchmark.json
 ```
 
@@ -83,7 +89,7 @@ uv pip install --python .venv-coreml/bin/python -e . 'torch==2.7.0' 'numpy==2.2.
 ```
 
 The exporter emits `mask.mlpackage`, `mask.mlmodelc`, `config.yaml`,
-`dsp.safetensors`, and `conversion.json` under `artifacts/coreml-fp16/`.
+`dsp.safetensors`, and `conversion.json` under `artifacts/coreml-perceptual-200k-fp16/`.
 Validation compares the compiled mask and complete waveforms against FP32
 PyTorch loaded from the published FP16 checkpoint, using noise, silence, and
 beginning/middle/end music chunks. The report includes checkpoint SHA-256 and numerical errors;

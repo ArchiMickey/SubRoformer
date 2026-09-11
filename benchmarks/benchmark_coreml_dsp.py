@@ -27,7 +27,7 @@ def main():
     import coremltools as ct
 
     parser = argparse.ArgumentParser(description="Compare CPU and MPS DSP with an unchanged Core ML artifact")
-    parser.add_argument("--artifact", type=Path, default=ROOT / "artifacts/coreml-fp16")
+    parser.add_argument("--artifact", type=Path, default=ROOT / "artifacts/coreml-perceptual-200k-fp16")
     parser.add_argument("--validation-audio", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--repeats", type=int, default=5)

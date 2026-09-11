@@ -2,6 +2,7 @@
 .venv-coreml/
 artifacts/coreml/
 artifacts/coreml-fp16/
+artifacts/coreml-perceptual-200k-fp16/
 __pycache__/
 *.py[cod]
 .pytest_cache/

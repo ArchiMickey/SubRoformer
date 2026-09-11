@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 from model_utils import build_model, load_config
 
 
-COREML_DIRECTORY = "coreml/base-4stem-fp16-v1"
+COREML_DIRECTORY = "coreml/base-4stem-perceptual-200k-fp16-v1"
 
 
 def use_coreml(backend, device, config_path=None, checkpoint_path=None):

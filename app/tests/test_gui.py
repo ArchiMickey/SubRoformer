@@ -54,6 +54,35 @@ def application():
     yield application
 
 
+def test_app_branding(application):
+    window = MainWindow()
+    try:
+        assert window.windowTitle() == "SubStemStudio"
+        assert "SubStemStudio" in [label.text() for label in window.findChildren(QLabel, "heading")]
+        assert window.output.text() == str(Path.home() / "Music" / "SubStemStudio")
+    finally:
+        window.close()
+
+
+def test_action_buttons_beside_playback(application):
+    window = MainWindow()
+    try:
+        window.show()
+        application.processEvents()
+        buttons = [window.pause_playback, window.start, window.cancel, window.open_output]
+        for previous, button in zip(buttons, buttons[1:]):
+            assert button.parentWidget() is window.pause_playback.parentWidget()
+            assert button.geometry().top() == previous.geometry().top()
+            assert button.geometry().left() > previous.geometry().right()
+            assert button.isVisible()
+        assert window.playback_status.geometry().top() > window.pause_playback.geometry().bottom()
+        assert window.start.isEnabled()
+        assert not window.cancel.isEnabled()
+        assert not window.open_output.isEnabled()
+    finally:
+        window.close()
+
+
 def test_cards_start_blank_and_replace_only_received_columns(application):
     window = MainWindow()
     mixture = np.full((513, 30), -20, dtype=np.float32)
@@ -334,6 +363,53 @@ def test_icon_and_spacebar_playback(application, monkeypatch):
     assert field.text() == " " and window.player.playing
     assert not window.playback_shortcut.autoRepeat()
     window.close()
+
+
+@pytest.mark.parametrize("gesture", ["click", "keyboard"])
+def test_shift_stem_solos_without_seeking(application, monkeypatch, gesture):
+    from app.tests.test_player import FakeSink
+
+    window = MainWindow()
+    try:
+        stems = ["vocals", "bass", "drums", "other"]
+        window.prepare(np.full((513, 30), -20, dtype=np.float32), 1000, 4000, stems)
+        window.receive_audio(MIXTURE_KEY, 0, np.full((2, 4000), .8, dtype=np.float32))
+        for stem in stems:
+            window.receive_audio(stem, 0, np.full((2, 4000), .1, dtype=np.float32))
+        monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
+        window.show()
+        window.activateWindow()
+        window.pause_playback.setFocus()
+        application.processEvents()
+        window.player.seek_time(.5)
+        for playing in (True, False):
+            if not playing:
+                window.player.pause()
+            for number, stem in enumerate(stems, 2):
+                for repeat in range(2):
+                    if gesture == "click":
+                        QTest.mouseClick(window.stem_buttons[stem], Qt.MouseButton.LeftButton,
+                                         Qt.KeyboardModifier.ShiftModifier)
+                    else:
+                        QTest.keyClick(window, getattr(Qt.Key, f"Key_{number}"),
+                                       Qt.KeyboardModifier.ShiftModifier)
+                    assert window.player.selected == (stem,)
+                    assert window.player.position == 500
+                    assert window.player.playing == playing
+                    assert window.stem_buttons[stem].isChecked()
+                    assert not window.stem_buttons[MIXTURE_KEY].isChecked()
+                    if playing:
+                        np.testing.assert_allclose(
+                            np.frombuffer(window.player.sink.writes, dtype=np.float32), .1)
+        assert all(not shortcut.autoRepeat() for shortcut in window.solo_shortcuts)
+        window.input.setFocus()
+        QTest.keyClick(window.input, Qt.Key.Key_2, Qt.KeyboardModifier.ShiftModifier)
+        assert window.player.selected == ("other",)
+        window.player.reset()
+        window.switch_playback("vocals", solo=True)
+        assert not window.player.selected
+    finally:
+        window.close()
 
 
 def test_stem_key_labels_and_backtick_mute(application, monkeypatch):

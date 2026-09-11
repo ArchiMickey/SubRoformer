@@ -13,7 +13,15 @@ from tests.helpers import tiny_config
 
 
 def test_default_artifact_is_fp16():
-    assert coreml_inference.COREML_DIRECTORY == "coreml/base-4stem-fp16-v1"
+    assert coreml_inference.COREML_DIRECTORY == "coreml/base-4stem-perceptual-200k-fp16-v1"
+
+
+def test_export_preserves_input_block_and_norm_precision():
+    from export_coreml import use_fp16_for_op
+
+    for module in ("RMSNorm", "RMSNorm2d", "GRN", "TimeMixBlock"):
+        assert not use_fp16_for_op(SimpleNamespace(scopes={"module": [module]}))
+    assert use_fp16_for_op(SimpleNamespace(scopes={"module": ["blocks_0", "Linear"]}))
 
 
 def test_snapshot_reports_bytes_not_file_counts_or_transfer_bytes(tmp_path, monkeypatch):
