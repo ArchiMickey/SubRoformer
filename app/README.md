@@ -1,8 +1,12 @@
-# SubRoformer Stem Studio
+# SubStemStudio
 
 A native, local desktop GUI using PySide6 and pyqtgraph. App-specific source,
 dependencies, and tests live in `app/`. The app and CLI share the inference
 engine, model loading, and device helpers.
+
+SubStemStudio is the app name; the SubRoformer model, Python package, and
+Hugging Face repository names are unchanged. The default export parent folder
+is `~/Music/SubStemStudio`; existing exports are not moved.
 
 ### Memory and streaming
 
@@ -67,7 +71,10 @@ platform-specific validation. Linux may need system Qt/XCB libraries.
    fused linear biases. CPU/CUDA retain the standard linear implementation;
    no fallback environment variable or FP32 conversion of all weights is required.
 3. Optionally select a matching config/checkpoint pair. Blank fields use the
-   Base FP16 checkpoint (`subroformer_base_4stem_1400000_ema_fp16.safetensors`).
+   200k perceptual-finetuned FP16 checkpoint
+   (`subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors`)
+   with `sbroformer_base_4stem_silu.yaml`. Core ML uses the matching validated
+   `coreml/base-4stem-perceptual-200k-fp16-v1/` artifact.
    Missing artifacts may download from Hugging Face. The following
    config/checkpoint fallback rules apply to the PyTorch path.
    Missing config and checkpoint files fall back independently to the published
@@ -114,6 +121,8 @@ The **Mixture, Vocals, Bass, Drums, Others** tabs control playback.
 Mixture indicator. Playback sums only enabled stems when a subset is on. All-on plays the original
 mixture directly, without double-counting it, and works before separation finishes.
 Unavailable stems are disabled for single-stem or nonstandard models.
+**Shift-click a stem** or press **Shift+2–5** (Vocals, Bass, Drums, Others) to
+listen to only that stem, retaining the current timestamp and pause/play state.
 **Mute all** turns every stem off without pausing: silent audio
 keeps the timeline advancing to the end of the mixture. Enable stems or Mixture
 to hear audio again at the current timestamp. Muting while paused stays paused.
@@ -270,11 +279,14 @@ python -m pip install -r app/requirements-build.txt
 python app/build.py
 ```
 
-- **macOS:** `app/dist/SubRoformer.app` and `app/dist/SubRoformer.dmg` — the disk
+The build uses `app/SubStemStudio.spec`. The macOS bundle identifier remains
+`com.archimickey.subroformer` for continuity with earlier builds.
+
+- **macOS:** `app/dist/SubStemStudio.app` and `app/dist/SubStemStudio.dmg` — the disk
   image contains the app and an Applications shortcut for drag-and-drop installation.
-- **Windows:** `app/dist/SubRoformer/SubRoformer.exe` — distribute the entire
-  `SubRoformer` folder, including `_internal`, not the executable alone.
-- **Linux:** `app/dist/SubRoformer/SubRoformer` with its accompanying folder.
+- **Windows:** `app/dist/SubStemStudio/SubStemStudio.exe` — distribute the entire
+  `SubStemStudio` folder, including `_internal`, not the executable alone.
+- **Linux:** `app/dist/SubStemStudio/SubStemStudio` with its accompanying folder.
 
 This freezes Python, Qt, PyTorch, and application code into a desktop bundle;
 recipients do not need a separate Python installation. It is deliberately

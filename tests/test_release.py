@@ -8,6 +8,7 @@ from training_utils import load_config
 def test_release_contains_only_base_configs():
     root = Path(__file__).resolve().parents[1]
     expected = {f"sbroformer_base_{stem}.yaml" for stem in ["4stem", "vocals", "bass", "drums", "other"]}
+    expected.add("sbroformer_base_4stem_silu.yaml")
     assert {path.name for path in (root / "configs").glob("*.yaml")} == expected
 
 

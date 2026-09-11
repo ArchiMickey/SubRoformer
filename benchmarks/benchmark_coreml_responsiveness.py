@@ -52,7 +52,7 @@ def measure(model, audio):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--artifact", type=Path, default=ROOT / "artifacts/coreml-fp16")
+    parser.add_argument("--artifact", type=Path, default=ROOT / "artifacts/coreml-perceptual-200k-fp16")
     parser.add_argument("--audio", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

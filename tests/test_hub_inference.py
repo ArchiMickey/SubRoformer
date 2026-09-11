@@ -123,7 +123,8 @@ def test_failed_download_does_not_report_completion(tmp_path, monkeypatch):
 
 
 def test_default_checkpoint_is_fp16():
-    assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors"
+    assert inference.DEFAULT_CONFIG == "configs/sbroformer_base_4stem_silu.yaml"
+    assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
 
 
 def test_cli_config_and_checkpoint_are_optional(monkeypatch):

@@ -9,6 +9,7 @@ from model import (
     DEFAULT_GLOBAL_BS_FREQS_PER_BAND,
     GELUFeedForward,
     GEGLUFusion,
+    SiLUFusion,
     LinearFusion,
     MultiplicativeFusion,
     NoSkipFusion,
@@ -221,6 +222,7 @@ def test_local_analysis_ablation_uses_same_feature_grid():
     ("fusion_type", "fusion_class"),
     [
         ("geglu", GEGLUFusion),
+        ("silu", SiLUFusion),
         ("add", AdditiveFusion),
         ("multiply", MultiplicativeFusion),
         ("none", NoSkipFusion),
@@ -233,6 +235,17 @@ def test_skip_fusion_ablation_forward_backward(fusion_type, fusion_class):
     config.model.use_fusion = None
     model = _run_forward_backward(config)
     assert isinstance(model.fusion, fusion_class)
+
+
+def test_silu_fusion_matches_training_gate_and_checkpoint_keys():
+    fusion = SiLUFusion(dim=4)
+    fusion.load_state_dict(GEGLUFusion(dim=4).state_dict(), strict=True)
+    decoder = torch.randn(2, 4, 3, 5)
+    encoder = torch.randn_like(decoder)
+    combined = torch.cat([fusion.norm_dec(decoder), fusion.norm_enc(encoder)], dim=1)
+    gate, value = fusion.proj_in(combined).chunk(2, dim=1)
+    expected = decoder + fusion.proj_out(torch.nn.functional.silu(gate) * value)
+    torch.testing.assert_close(fusion(decoder, encoder), expected)
 
 
 def test_multiplicative_fusion_uses_direct_elementwise_product():

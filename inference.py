@@ -19,8 +19,8 @@ from model_utils import build_model, load_config
 
 
 DEFAULT_REPO_ID = "archimickey/SubRoformer"
-DEFAULT_CONFIG = "configs/sbroformer_base_4stem.yaml"
-DEFAULT_CHECKPOINT = "checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors"
+DEFAULT_CONFIG = "configs/sbroformer_base_4stem_silu.yaml"
+DEFAULT_CHECKPOINT = "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
 
 
 def resolve_device(device: str | torch.device) -> torch.device:

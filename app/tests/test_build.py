@@ -14,6 +14,7 @@ def test_build_creates_disk_image_only_on_macos(monkeypatch, platform):
     monkeypatch.setattr(build, "build_disk_image", images.append)
     build.main()
     assert "PyInstaller" in commands[0]
+    assert Path(commands[0][-1]).name == "SubStemStudio.spec"
     assert len(images) == (1 if platform == "darwin" else 0)
 
 
@@ -30,7 +31,9 @@ def test_disk_image_contains_app_and_applications_link(monkeypatch, tmp_path):
     monkeypatch.setattr(build.subprocess, "run", run)
     build.build_disk_image(tmp_path)
     assert commands[0][0] == "ditto"
-    assert commands[0][1] == str(tmp_path / "dist" / "SubRoformer.app")
-    assert commands[1][-1] == str(tmp_path / "dist" / "SubRoformer.dmg")
+    assert commands[0][1] == str(tmp_path / "dist" / "SubStemStudio.app")
+    assert commands[1][-1] == str(tmp_path / "dist" / "SubStemStudio.dmg")
     assert "UDZO" in commands[1]
+    assert commands[1][commands[1].index("-volname") + 1] == "SubStemStudio"
+    assert Path(commands[0][2]).name == "SubStemStudio.app"
     assert not Path(commands[0][2]).parent.exists()
