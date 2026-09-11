@@ -9,7 +9,7 @@ and keep each checkpoint paired with its matching config:
 | Model | FP16 checkpoint (under `checkpoints/`) | Config (under `configs/`) |
 | --- | --- | --- |
 | Original Base, 1.4M EMA | `subroformer_base_4stem_1400000_ema_fp16.safetensors` | `sbroformer_base_4stem.yaml` (GEGLU) |
-| Perceptual-finetuned, +200k EMA (default) | `subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors` | `sbroformer_base_4stem_silu.yaml` (SiLU) |
+| Perceptual finetuning, +200k EMA (default) | `subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors` | `sbroformer_base_4stem_silu.yaml` (SiLU) |
 
 The default app/CLI download is the perceptual-finetuned model. To use the
 original Base model, download its weights first and pass both local paths;
