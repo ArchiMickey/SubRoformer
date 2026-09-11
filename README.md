@@ -1,7 +1,21 @@
+![SubRoformer — Music Source Separation, with the app icon on the left](app/assets/subroformer-banner.png)
+
 # SubRoformer
 
+This is the official repository for **SubRoformer: Subband Time-Domain
+Representation for Music Source Separation**.
+
 Music source separation into **vocals, bass, drums, and other**, with a local
-desktop app and tools for training, evaluation, and inference.
+desktop app and tools for SubRoformer's training, evaluation, and inference.
+
+## Contributions
+
+- **Subband time-domain representation:** exposes spectral structure while
+  preserving fine temporal and phase information.
+- **Efficient subband analysis–synthesis front end:** reduces redundant full-rate
+  computation and shortens the sequences presented to the separator.
+- **Multiscale axial RoFormer:** captures long-range temporal and cross-band
+  dependencies while retaining fine-grained information for mask estimation.
 
 ## The app
 
@@ -47,3 +61,9 @@ to the 1.4M Base and uses the matching **SiLU** config, not the original
 | Checkpoint downloads and provenance | [docs/checkpoints.md](docs/checkpoints.md) |
 | Core ML setup and export | [docs/coreml.md](docs/coreml.md) |
 | Tests and validation | [docs/testing.md](docs/testing.md) |
+
+## Acknowledgments
+
+Thanks to Roman Solovyev (ZFTurbo) for
+[Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training),
+from which this project's dataset and DataLoader code are derived.
