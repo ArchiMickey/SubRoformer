@@ -21,7 +21,7 @@ Both checkpoints are available on
 | Checkpoint | Vocals | Bass | Drums | Other | Mean |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Original Base, 1.4M updates (EMA) | 12.6863 | 11.4961 | 12.2267 | 9.9445 | **11.5884** |
-| Perceptual-finetuned, +200k updates (EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
+| Perceptual finetuning, +200k updates (EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
 
 MUSDB18-HQ full-test `museval` SDR in dB (50 songs). Each stem is the median of
 per-song median SDRs; Mean averages the four stem medians. For these extra-data
