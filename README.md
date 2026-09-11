@@ -18,6 +18,12 @@ desktop app and tools for SubRoformer's training, evaluation, and inference.
   dependencies while retaining fine-grained information for mask estimation.
 
 ## The app
+Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
+<div align="center">
+
+https://github.com/user-attachments/assets/45b3fa51-0370-4635-a93b-738856479956
+
+</dev>
 
 **SubStemStudio** lets you drop in a song, separate four stems, listen
 while separation progresses, and export 48 kHz float32 WAVs. It includes
