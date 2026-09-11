@@ -15,6 +15,7 @@ from model import (
     RMSNorm,
     RaggedBandLinear,
     RaggedBandMaskEstimator,
+    SiLUFusion,
     SwiGLU,
     TimeMixBlock,
     TransformerBlock,
@@ -55,9 +56,11 @@ def test_sbroformer_forward_shape_and_finiteness():
     assert torch.isfinite(output).all()
 
 
-def test_sbroformer_joint_four_stem_forward_backward():
+@pytest.mark.parametrize("fusion_type", ["geglu", "silu"])
+def test_sbroformer_joint_four_stem_forward_backward(fusion_type):
     config = tiny_config(target_instrument=None)
     config.model.num_stems = 4
+    config.model.fusion_type = fusion_type
     model = build_model(config)
     audio = torch.randn(1, 2, 128)
 
@@ -221,6 +224,7 @@ def test_local_analysis_ablation_uses_same_feature_grid():
     ("fusion_type", "fusion_class"),
     [
         ("geglu", GEGLUFusion),
+        ("silu", SiLUFusion),
         ("add", AdditiveFusion),
         ("multiply", MultiplicativeFusion),
         ("none", NoSkipFusion),
@@ -233,6 +237,18 @@ def test_skip_fusion_ablation_forward_backward(fusion_type, fusion_class):
     config.model.use_fusion = None
     model = _run_forward_backward(config)
     assert isinstance(model.fusion, fusion_class)
+
+
+def test_silu_fusion_preserves_checkpoint_layout_and_uses_silu():
+    fusion = SiLUFusion(dim=4)
+    fusion.load_state_dict(GEGLUFusion(dim=4).state_dict(), strict=True)
+    assert isinstance(fusion.act, torch.nn.SiLU)
+    decoder = torch.randn(1, 4, 3, 5)
+    encoder = torch.randn_like(decoder)
+    combined = torch.cat([fusion.norm_dec(decoder), fusion.norm_enc(encoder)], dim=1)
+    gate, value = fusion.proj_in(combined).chunk(2, dim=1)
+    expected = decoder + fusion.proj_out(torch.nn.functional.silu(gate) * value)
+    torch.testing.assert_close(fusion(decoder, encoder), expected)
 
 
 def test_multiplicative_fusion_uses_direct_elementwise_product():

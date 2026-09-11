@@ -620,6 +620,7 @@ class GEGLUFusion(nn.Module):
 
     def __init__(self, dim, dim_mult=2 ):
         super().__init__()
+        self.act = nn.GELU()
 
         # 1. Normalization (Pre-norm) - separate norms for decoder and encoder
         self.norm_dec = RMSNorm2d(dim)
@@ -663,10 +664,16 @@ class GEGLUFusion(nn.Module):
         gate, value = gate_value.chunk(2, dim=1)
 
         # 4. Gating
-        hidden = F.gelu(gate) * value
+        hidden = self.act(gate) * value
 
         # 5. Output Project + Residual
         return residual + self.proj_out(hidden)
+
+
+class SiLUFusion(GEGLUFusion):
+    def __init__(self, dim: int, dim_mult: float = 2) -> None:
+        super().__init__(dim, dim_mult=dim_mult)
+        self.act = nn.SiLU()
 
 
 class AdditiveFusion(nn.Module):
@@ -1343,6 +1350,7 @@ class SBRoformer(nn.Module):
         self.up = nn.ConvTranspose2d(dim, self.feature_dim, kernel_size=self.patch_size, stride=self.patch_size)
         fusion_modules = {
             "geglu": lambda: GEGLUFusion(self.feature_dim, dim_mult=fusion_dim_mult),
+            "silu": lambda: SiLUFusion(self.feature_dim, dim_mult=fusion_dim_mult),
             "add": lambda: AdditiveFusion(self.feature_dim, dim_mult=fusion_dim_mult),
             "multiply": lambda: MultiplicativeFusion(self.feature_dim, dim_mult=fusion_dim_mult),
             "none": lambda: NoSkipFusion(self.feature_dim, dim_mult=fusion_dim_mult),
@@ -1458,7 +1466,7 @@ class SBRoformer(nn.Module):
         if fusion_type is None:
             return "geglu" if use_fusion is not False else "disabled"
         fusion_type = fusion_type.lower()
-        if fusion_type not in {"geglu", "add", "multiply", "none", "linear"}:
+        if fusion_type not in {"geglu", "silu", "add", "multiply", "none", "linear"}:
             raise ValueError(f"Unsupported fusion_type: {fusion_type}")
         if use_fusion is not None and (fusion_type != "none") != bool(use_fusion):
             raise ValueError(f"fusion_type={fusion_type!r} conflicts with use_fusion={use_fusion!r}")

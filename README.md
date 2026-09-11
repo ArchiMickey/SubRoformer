@@ -5,6 +5,10 @@ separation. Base configs support joint four-stem output and separate single-stem
 models. Existing `SBRoformer` class names and config stems are retained for
 checkpoint compatibility.
 
+`configs/sbroformer_base_4stem_silu.yaml` selects SiLU-gated skip fusion for
+perceptual finetuning. Use this config with the newest checkpoint; the original
+four-stem config keeps GEGLU fusion.
+
 ## Install
 
 Use Python 3.11 and a PyTorch installation appropriate for your CPU, CUDA, or Metal
