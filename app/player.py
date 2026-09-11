@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import tempfile
+from math import gcd
 
 import numpy as np
 from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtMultimedia import QAudioFormat, QAudioSink, QMediaDevices, QtAudio
+from scipy.signal import resample_poly
 
 
 MIXTURE_KEY = "\x00mixture"
@@ -132,8 +134,42 @@ class StemPlayer(QObject):
         audio_format.setChannelCount(channels)
         audio_format.setSampleFormat(QAudioFormat.SampleFormat.Float)
         if not device.isFormatSupported(audio_format):
-            raise ValueError(f"Audio output does not support {self.rate} Hz / {channels} channels / float32")
+            audio_format = device.preferredFormat()
+            if not audio_format.isValid() or not device.isFormatSupported(audio_format):
+                raise ValueError("Audio output has no supported PCM format")
+        self.output_format = audio_format
         return QAudioSink(device, audio_format, self)
+
+    def output_samples(self, first, end):
+        output_rate = self.output_format.sampleRate()
+        divisor = gcd(self.rate, output_rate)
+        up, down = output_rate // divisor, self.rate // divisor
+        margin = 10 * max(up, down) // up + 2
+        start = max(0, (first * down // up - margin) // down * down)
+        stop = min(self.available - self.origin, (end * down + up - 1) // up + margin)
+        if up == down:
+            start, stop = first, end
+        mixed = np.zeros((stop - start, self.channels), dtype=np.float32)
+        for stem in self.playback_sources:
+            mixed += self.samples(stem, self.origin + start, self.origin + stop)
+        if up != down:
+            mixed = resample_poly(mixed, up, down, axis=0)
+            offset = first - start * up // down
+            mixed = mixed[offset:offset + end - first]
+        channels = self.output_format.channelCount()
+        if channels == 1 and self.channels > 1:
+            mixed = mixed.mean(axis=1, keepdims=True)
+        elif channels != self.channels:
+            mixed = mixed[:, np.arange(channels) % self.channels]
+        mixed = np.clip(mixed, -1, 1)
+        sample_format = self.output_format.sampleFormat()
+        if sample_format == QAudioFormat.SampleFormat.UInt8:
+            mixed = np.clip(np.rint((mixed + 1) * 128), 0, 255).astype(np.uint8)
+        elif sample_format == QAudioFormat.SampleFormat.Int16:
+            mixed = np.clip(np.rint(mixed.astype(np.float64) * 32768), -32768, 32767).astype(np.int16)
+        elif sample_format == QAudioFormat.SampleFormat.Int32:
+            mixed = np.clip(np.rint(mixed.astype(np.float64) * 2147483648), -2147483648, 2147483647).astype(np.int32)
+        return np.ascontiguousarray(mixed).tobytes()
 
     def seek(self, stem, seconds):
         self.select_stems([stem])
@@ -154,10 +190,15 @@ class StemPlayer(QObject):
             if self.sink is not None:
                 self.sink.resume()
             else:
+                self.output_format = QAudioFormat()
+                self.output_format.setSampleRate(self.rate)
+                self.output_format.setChannelCount(self.channels)
+                self.output_format.setSampleFormat(QAudioFormat.SampleFormat.Float)
                 self.sink = self.create_sink(self.channels)
-                self.sink.setBufferSize(max(1, self.rate // 10) * self.channels * 4)
+                self.sink.setBufferSize(max(1, self.output_format.sampleRate() // 10) * self.output_format.bytesPerFrame())
                 self.origin = self.position
-                self.queued_bytes = self.position * self.channels * 4
+                self.queued_bytes = 0
+                self.pending = b""
                 self.output = self.sink.start()
                 if self.output is None or self.sink.error() != QtAudio.Error.NoError:
                     raise RuntimeError("Unable to start the audio output device")
@@ -178,9 +219,9 @@ class StemPlayer(QObject):
             self.changed.emit()
 
     def update_position(self):
-        channels = self.channels
         self.position = min(
-            self.queued_bytes // (channels * 4),
+            self.available,
+            self.origin + self.queued_bytes // self.output_format.bytesPerFrame() * self.rate // self.output_format.sampleRate(),
             self.origin + int(self.sink.processedUSecs() * self.rate / 1_000_000),
         )
 
@@ -193,30 +234,34 @@ class StemPlayer(QObject):
             self.changed.emit()
             return
         self.update_position()
-        available_bytes = self.available * self.channels * 4
+        frame_bytes = self.output_format.bytesPerFrame()
+        output_rate = self.output_format.sampleRate()
+        available_frames = ((self.available - self.origin) * output_rate + self.rate - 1) // self.rate
+        available_bytes = available_frames * frame_bytes
         if self.queued_bytes == available_bytes and self.sink.state() == QtAudio.State.IdleState:
             self.position = self.available
             self.release()
             self.changed.emit()
             return
         count = min(self.sink.bytesFree(), available_bytes - self.queued_bytes)
-        count -= count % (self.channels * 4)
+        if not self.pending:
+            count -= count % frame_bytes
         if count > 0:
-            first = self.queued_bytes // (self.channels * 4)
-            end = first + count // (self.channels * 4)
-            mixed = np.zeros((end - first, self.channels), dtype=np.float32)
             try:
-                for stem in self.playback_sources:
-                    mixed += self.samples(stem, first, end)
+                if not self.pending:
+                    first = self.queued_bytes // frame_bytes
+                    end = first + count // frame_bytes
+                    self.pending = self.output_samples(first, end)
             except OSError as error:
                 self.release()
                 self.failed.emit(f"Unable to read playback audio: {error}")
                 self.changed.emit()
                 return
-            written = self.output.write(np.clip(mixed, -1, 1).tobytes())
+            written = self.output.write(self.pending[:count])
             if written < 0:
                 self.release()
                 self.failed.emit("Unable to write to the audio output")
             else:
                 self.queued_bytes += written
+                self.pending = self.pending[written:]
         self.changed.emit()

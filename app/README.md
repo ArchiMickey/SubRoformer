@@ -151,8 +151,9 @@ uncomputed silence. New input/run and window close stop the previous audio.
 After cancellation, already finalized audio remains playable.
 
 Playback uses Qt Multimedia and the default system output device, with no new
-dependency. The device must support the model's sample rate, channel count, and
-float32 format; missing/unsupported devices show a playback-only error and do
+dependency. If the source format is unsupported, playback uses the device's
+preferred format, with polyphase resampling, mono averaging or channel repetition,
+and float32/uint8/int16/int32 PCM conversion as needed. Missing or unusable devices show a playback-only error and do
 not stop separation. Stems retain unclipped float32 audio; only the final
 playback sum is clipped to [-1, 1]. Exported WAVs are unchanged. Playback retains
 finalized stem and mixture PCM in temporary files.
