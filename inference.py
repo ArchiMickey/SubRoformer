@@ -23,6 +23,13 @@ DEFAULT_CONFIG = "configs/sbroformer_base_4stem_silu.yaml"
 DEFAULT_CHECKPOINT = "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
 
 
+def load_inference_config(path: str | Path):
+    config = load_config(path)
+    if config.model.get("frontend_type", "waveform_subband") == "waveform_subband":
+        config.model.setdefault("dsp_backend", "dsp2")
+    return config
+
+
 def resolve_device(device: str | torch.device) -> torch.device:
     if str(device) == "auto":
         device = "cuda" if torch.cuda.is_available() else (
@@ -235,7 +242,7 @@ def load_separator(
         config_path, checkpoint_path, repo_id=repo_id, revision=revision,
         cache_dir=cache_dir, local_files_only=local_files_only,
     )
-    config = load_config(config_path)
+    config = load_inference_config(config_path)
     model = build_model(config)
     load_model_checkpoint(model, checkpoint_path, preserve_dtype=preserve_dtype)
     return model.to(device).eval(), config
@@ -324,7 +331,7 @@ def separate_file(
             config_path, DEFAULT_CONFIG, repo_id=repo_id, revision=revision,
             cache_dir=cache_dir, local_files_only=local_files_only,
         )
-        config = load_config(config_path)
+        config = load_inference_config(config_path)
     segment_samples = int(config.audio.chunk_size)
     if not 1 <= hop_ratio <= segment_samples:
         raise ValueError("hop_ratio must be between 1 and audio.chunk_size")
@@ -383,7 +390,7 @@ def separate_file(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Separate an audio file without reference stems")
-    parser.add_argument("--config", help="Local config; missing files fall back to the HF Base config")
+    parser.add_argument("--config", help="Local config; missing files fall back to the HF Base config; waveform inference defaults to dsp2")
     parser.add_argument("--checkpoint", help="Local weights; missing files fall back to the HF Base checkpoint")
     parser.add_argument("--repo_id", default=DEFAULT_REPO_ID)
     parser.add_argument("--revision", help="HF branch, tag, or commit")

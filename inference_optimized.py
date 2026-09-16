@@ -11,6 +11,8 @@ def optimize_for_inference(model, level: int = 3):
         raise ValueError(f"Unknown optimization level: {level}")
     if model.sb_filter is None:
         raise ValueError("These optimizations require the waveform-subband frontend")
+    if getattr(model, "dsp_backend", "dsp") != "dsp":
+        raise ValueError("These optimizations require dsp_backend='dsp'; use dsp2 directly")
     optimized = copy.deepcopy(model)
     optimized.sb_filter = InferenceSubbandFilter(optimized.sb_filter, level)
     return optimized.eval()
