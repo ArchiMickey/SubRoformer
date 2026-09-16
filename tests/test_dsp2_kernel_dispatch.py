@@ -6,16 +6,20 @@ from dsp2 import SubbandFilter, mel_linear_banks_triangle
 from dsp2.utils import _shift_frequency_reference, shift_frequency
 
 
-@pytest.fixture(params=["cpu", "cuda"])
+@pytest.fixture(params=["cpu", "cuda", "mps"])
 def device(request):
     if request.param == "cuda" and not torch.cuda.is_available():
         pytest.skip("CUDA is unavailable")
+    if request.param == "mps" and not torch.backends.mps.is_available():
+        pytest.skip("MPS is unavailable")
     return request.param
 
 
 @pytest.mark.parametrize("dtype", [torch.complex64, torch.complex128])
 @pytest.mark.parametrize("layout", ["contiguous", "sliced", "conjugate", "expanded", "padded", "transposed"])
 def test_dispatch_forward_and_backward(device, dtype, layout):
+    if device == "mps" and dtype == torch.complex128:
+        pytest.skip("MPS does not support complex128")
     signal = torch.randn(2, 3, 514, device=device, dtype=dtype)
     if layout == "sliced":
         signal = signal[..., ::2]
@@ -33,6 +37,8 @@ def test_dispatch_forward_and_backward(device, dtype, layout):
     actual = shift_frequency(signal, frequencies, 48000, (1 << 32) + 60)
     expected = _shift_frequency_reference(reference_signal, frequencies, 48000, 60)
     tolerance = 1e-6 if dtype == torch.complex64 else 2e-12
+    if device == "mps":
+        tolerance = 0
     torch.testing.assert_close(actual, expected, atol=tolerance, rtol=tolerance)
     upstream = torch.randn_like(actual)
     actual.backward(upstream)
@@ -41,6 +47,8 @@ def test_dispatch_forward_and_backward(device, dtype, layout):
 
 
 def test_dispatch_second_derivatives(device):
+    if device == "mps":
+        pytest.skip("MPS does not support double-precision gradcheck")
     signal = torch.randn(1, 2, 7, dtype=torch.complex128, device=device, requires_grad=True)
     frequencies = torch.tensor([13.5, -711.0], device=device)
     operation = lambda signal: shift_frequency(signal, frequencies, 1600, 4)
@@ -76,6 +84,8 @@ def test_dispatch_uses_native_kernel_and_falls_back(device, monkeypatch):
 
 @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
 def test_real_input_fallback(device, dtype):
+    if device == "mps" and dtype == torch.float64:
+        pytest.skip("MPS does not support float64")
     signal = torch.randn(2, 3, 17, device=device, dtype=dtype)
     frequencies = torch.tensor([0.0, 11.5, -700.0], device=device)
     torch.testing.assert_close(

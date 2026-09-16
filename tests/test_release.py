@@ -17,7 +17,7 @@ def test_release_dsp2_config_contract():
     root = Path(__file__).resolve().parents[1]
     original = load_config(root / "configs/sbroformer_base_4stem_silu.yaml")
     config = load_config(root / "configs/sbroformer_base_4stem_silu_dsp2.yaml")
-    assert config.model.pop("dsp_backend") == "dsp2"
+    assert config.model.dsp_backend == "dsp2"
     assert config == original
 
 
@@ -27,6 +27,7 @@ def test_release_silu_config_contract():
     config = load_config(str(root / "configs" / "sbroformer_base_4stem_silu.yaml"))
     assert "extends" not in config
     assert config.model.fusion_type == "silu"
+    assert config.model.pop("dsp_backend") == "dsp2"
     assert config.training.output_dir == "checkpoints/sbroformer_base_4stem_silu"
     del config.model.fusion_type
     config.training.output_dir = base.training.output_dir

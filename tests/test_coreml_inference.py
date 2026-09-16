@@ -9,11 +9,23 @@ from omegaconf import OmegaConf
 import coreml_inference
 import inference
 from model_utils import build_model
+from dsp2 import SubbandFilter
+from dsp.inference_optimized import InferenceSubbandFilter
 from tests.helpers import tiny_config
 
 
 def test_default_artifact_is_fp16():
     assert coreml_inference.COREML_DIRECTORY == "coreml/base-4stem-perceptual-200k-fp16-v1"
+
+
+@pytest.mark.parametrize("backend,expected", [(None, SubbandFilter), ("dsp2", SubbandFilter), ("dsp", InferenceSubbandFilter)])
+def test_coreml_defaults_to_dsp2_without_overriding_explicit_backend(backend, expected):
+    config = tiny_config()
+    if backend is not None:
+        config.model.dsp_backend = backend
+    model = coreml_inference.CoreMLSeparator(None, config)
+    assert isinstance(model.dsp.sb_filter, expected)
+    assert config.model.get("dsp_backend") == backend
 
 
 def test_export_preserves_input_block_and_norm_precision():
@@ -125,6 +137,7 @@ def test_hybrid_waveform_and_batched_streaming(dsp_device):
         pytest.skip("MPS DSP requires PyTorch 2.14 and MPS hardware")
     config = tiny_config()
     config.model.num_stems = 4
+    config.model.dsp_backend = "dsp2"
     reference = build_model(config).eval()
     reference.sb_filter.w.mul_(0.99)
     calls = []

@@ -6,7 +6,9 @@ import json
 import os
 from pathlib import Path
 import platform
+import subprocess
 import sys
+import time
 
 import torch
 from torch.utils.benchmark import Timer
@@ -18,10 +20,17 @@ from dsp2 import SubbandFilter, mel_linear_banks_triangle
 from dsp2.utils import _shift_frequency_reference, shift_frequency
 
 
-def measure(operation, threads, duration):
+def measure(operation, threads, duration, device):
+    def timer():
+        if device == "mps":
+            torch.mps.synchronize()
+        elif device == "cuda":
+            torch.cuda.synchronize()
+        return time.perf_counter()
+
     for _ in range(3):
         operation()
-    timing = Timer(stmt="operation()", globals={"operation": operation}, num_threads=threads)
+    timing = Timer(stmt="operation()", globals={"operation": operation}, num_threads=threads, timer=timer)
     return timing.blocked_autorange(min_run_time=duration).median * 1000
 
 
@@ -35,7 +44,7 @@ def compare(name, original, optimized, threads, duration):
     for repeat in range(3):
         operations = [("reference", original), ("kernel", optimized)]
         for label, operation in operations[::1 if repeat % 2 == 0 else -1]:
-            timings[label].append(measure(operation, threads, duration))
+            timings[label].append(measure(operation, threads, duration, actual.device.type))
     baseline = sorted(timings["reference"])[1]
     native = sorted(timings["kernel"])[1]
     result = dict(name=name, reference_ms=baseline, kernel_ms=native, speedup=baseline / native,
@@ -46,7 +55,7 @@ def compare(name, original, optimized, threads, duration):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--device", choices=["cpu", "cuda"], required=True)
+    parser.add_argument("--device", choices=["cpu", "cuda", "mps"], required=True)
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument("--duration", type=float, default=0.3)
     parser.add_argument("--output", type=Path)
@@ -57,8 +66,10 @@ def main():
     device = arguments.device
     if device == "cpu":
         from dsp2.cpu_kernel import is_available
-    else:
+    elif device == "cuda":
         from dsp2.cuda_kernel import is_available
+    else:
+        from dsp2.mps_kernel import is_available
     if not is_available():
         raise RuntimeError(f"Native {device} kernel is unavailable")
     results = []
@@ -88,11 +99,18 @@ def main():
             lambda: filterbank(_shift_frequency_reference), lambda: filterbank(shift_frequency),
             arguments.threads, arguments.duration))
     report = dict(device=device, threads=arguments.threads, torch_version=torch.__version__,
+                  warmup=3, min_run_time=arguments.duration,
                   processor=platform.processor(),
                   gpu=torch.cuda.get_device_name() if device == "cuda" else None, results=results)
+    if device == "mps":
+        report["gpu"] = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip()
+        report["macos_version"] = platform.mac_ver()[0]
     report["cpu_affinity"] = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
     root = Path(__file__).resolve().parents[1]
-    paths = [root / "dsp2" / name for name in ("utils.py", "cpu_kernel.py", "cuda_kernel.py", "csrc/shift_frequency_cpu.cpp")]
+    paths = [root / "dsp2" / name for name in (
+        "utils.py", "cpu_kernel.py", "cuda_kernel.py", "mps_kernel.py",
+        "csrc/shift_frequency_cpu.cpp", "csrc/shift_frequency_mps.metal",
+    )]
     report["source_sha256"] = {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
     if arguments.output:
         arguments.output.parent.mkdir(parents=True, exist_ok=True)

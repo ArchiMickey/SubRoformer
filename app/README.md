@@ -60,8 +60,10 @@ platform-specific validation. Linux may need system Qt/XCB libraries.
    uses SoundFile; supported formats depend on its libsndfile installation.
 2. Choose an export parent folder, device (including `cuda:1`),
    batch size, and overlap ratio. Model chunk size stays in the model config.
-   The app uses PyTorch and initially selects CUDA → MPS → CPU, so supported
-   Macs start with MPS. On the PyTorch path,
+   The app defaults to Core ML on macOS 15+ and PyTorch elsewhere, and initially
+   selects CUDA → MPS → CPU, so supported Macs start with MPS. DSP2 uses its
+   optimized Metal modulation and filter FFT cache on MPS by default for both
+   neural backends. On the PyTorch path,
    precision is fixed by the checkpoint: the default weights stay FP16.
    Select an FP32 checkpoint for FP32 inference. The info pane's PRECISION card
    shows the loaded backend and precision throughout separation and after completion.
@@ -326,6 +328,10 @@ and [pyqtgraph ImageItem](https://pyqtgraph.readthedocs.io/en/pyqtgraph-0.13.6/a
 The app defaults to Core ML on macOS 15+ and PyTorch elsewhere. Choose
 **Backend → Core ML** and **Device → mps** for
 GPU-accelerated DSP, or CPU for CPU DSP. Auto selects MPS when available.
+DSP defaults to DSP2, including the optimized Metal modulation kernel and
+inference filter FFT cache on MPS. The bundled app includes the Metal shader;
+no separate compiler installation, model re-export, or new weights are needed.
+See [DSP2 validation and benchmarks](../docs/dsp2.md).
 MPS DSP requires PyTorch 2.14+; Core ML requires macOS 15+ and blank custom
 config/checkpoint fields. Select PyTorch manually for custom models.
 Core ML inference runs in a dedicated spawned process so its native prediction

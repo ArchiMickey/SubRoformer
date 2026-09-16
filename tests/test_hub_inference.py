@@ -125,6 +125,9 @@ def test_failed_download_does_not_report_completion(tmp_path, monkeypatch):
 def test_default_checkpoint_is_fp16():
     assert inference.DEFAULT_CONFIG == "configs/sbroformer_base_4stem_silu.yaml"
     assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
+    config = inference.load_config(Path(__file__).resolve().parents[1] / inference.DEFAULT_CONFIG)
+    assert config.model.dsp_backend == "dsp2"
+    assert config.model.fusion_type == "silu"
 
 
 @pytest.mark.parametrize("backend", [None, "dsp", "dsp2"])

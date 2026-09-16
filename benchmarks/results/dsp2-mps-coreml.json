@@ -1,0 +1,141 @@
+{
+  "backend": "coreml",
+  "device": "mps",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "hardware": "Apple M5 Pro",
+  "torch_version": "2.14.0",
+  "samples": 96000,
+  "batch_size": 1,
+  "threads": 4,
+  "warmup": 3,
+  "min_run_time": 2.0,
+  "trials_ms": {
+    "reference": [
+      267.65218807850033,
+      266.98685460723937,
+      267.91510405018926
+    ],
+    "kernel": [
+      224.03216687962413,
+      223.75949984416366,
+      225.59870802797377
+    ],
+    "legacy": [
+      226.48137505166233,
+      224.9391251243651,
+      232.07666701637208
+    ]
+  },
+  "reference_ms": 267.65218807850033,
+  "kernel_ms": 224.03216687962413,
+  "speedup": 1.194704277543831,
+  "errors": {
+    "noise": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "silence": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "quiet": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "music": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    }
+  },
+  "reference_filterbank": "uncached DSP2 reference",
+  "kernel_filterbank": "DSP2 Metal with filter FFT cache",
+  "filter_cache_bytes": 148258080,
+  "timing_input": "music",
+  "output_device": "cpu",
+  "source_sha256": {
+    "dsp2/utils.py": "cb53eb6fba8dbec434a189d14510b4302a5d3734e20e30ccc46b96103c2dad9c",
+    "dsp2/mps_kernel.py": "832b7d6773a3a217fdb4f793c36256def7b49f0304b52acec1face09508b17b1",
+    "dsp2/csrc/shift_frequency_mps.metal": "d3556852e4aa8bdf642dc8dd7aef4537129638edaacb6ccf6c64808c2d8544ad",
+    "dsp2/inference_optimized.py": "c587fa3189ecf2918a62c045095f071f4cfb790f33e02b1a7e12b816aaf2c160",
+    "dsp/inference_optimized.py": "f395b1b0998354e2effaa1cb7fc3eba842d6d29035c5dde81e3f3e0699113eca",
+    "coreml_inference.py": "7c51609509b0a65e04e26ccae9b50dbf919b1b2a690b6896cc33acf817f205db",
+    "model.py": "c0ac63eca18b7d6243eb44da01de01912d45bd6bffcd85770c2276dae27f627f",
+    "benchmarks/benchmark_dsp2_mps_model.py": "6a9698b134e1482f5a6b793e93057740e7d71f1712e3aa5e4e8647beaf7f88fc",
+    "benchmarks/benchmark_dsp2_kernels.py": "bed3a26ab42a1ce49dfec91a09c4360c7952cea587a8129ef1134493126a91d9"
+  },
+  "input_sha256": {
+    "artifacts/coreml-perceptual-200k-fp16/config.yaml": "e8bb0c9b0327e3f30452bc5038b7b5392a6ff7336deb737be91092cc5463505d",
+    "artifacts/coreml-perceptual-200k-fp16/dsp.safetensors": "a9e5391dbb48895735b97a182209b3b1ec1f9bd42280530bbc5ad0fc91716f8e",
+    "artifacts/coreml-perceptual-200k-fp16/mask.mlmodelc/analytics/coremldata.bin": "0631a70cd3b1281d89f621966189342436405735a7d5ae34b03203c42d9062a7",
+    "artifacts/coreml-perceptual-200k-fp16/mask.mlmodelc/coremldata.bin": "392976e6ceecb1b34ed0fa4dcf359675820f53cab2f0980cf860941faee7cfb2",
+    "artifacts/coreml-perceptual-200k-fp16/mask.mlmodelc/model.mil": "6d33b883d9ea922e42c01523a6abd9ef4e2c9f1a883f241aca65fa634b5eae9c",
+    "artifacts/coreml-perceptual-200k-fp16/mask.mlmodelc/weights/weight.bin": "aa37ceccd43d1f0f6d4d6918e2a322b242824fb9c8809e03ea483ef55125343c",
+    "Netrum & Halvorsen - Phoenix \uff5c Synthwave \uff5c NCS - Copyright Free Music [yH88qRmgkGI].wav": "e9f65f95e01e9c4551681d4050673aa0a1881b3fa745e1d412dc0db1b09214ad"
+  },
+  "legacy_ms": 226.48137505166233,
+  "legacy_speedup": 1.010932395138392
+}
