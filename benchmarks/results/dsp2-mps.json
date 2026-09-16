@@ -1,0 +1,101 @@
+{
+  "device": "mps",
+  "threads": 1,
+  "torch_version": "2.14.0",
+  "warmup": 3,
+  "min_run_time": 1.0,
+  "processor": "arm",
+  "gpu": "Apple M5 Pro",
+  "results": [
+    {
+      "name": "analysis_chunk",
+      "reference_ms": 0.08321332978084683,
+      "kernel_ms": 0.016557082999497652,
+      "speedup": 5.025844817192229,
+      "max_absolute_error": 0.0,
+      "relative_rms_error": 0.0,
+      "trials_ms": {
+        "reference": [
+          0.08313853992149234,
+          0.08321332978084683,
+          0.08333041099831462
+        ],
+        "kernel": [
+          0.016632416984066367,
+          0.015512499958276747,
+          0.016557082999497652
+        ]
+      }
+    },
+    {
+      "name": "synthesis_chunk",
+      "reference_ms": 1.0327542200684547,
+      "kernel_ms": 0.2204666961915791,
+      "speedup": 4.684400128947465,
+      "max_absolute_error": 0.0,
+      "relative_rms_error": 0.0,
+      "trials_ms": {
+        "reference": [
+          1.0327542200684547,
+          1.0456312913447618,
+          0.970354420132935
+        ],
+        "kernel": [
+          0.2711570798419416,
+          0.2193541033193469,
+          0.2204666961915791
+        ]
+      }
+    },
+    {
+      "name": "synthesis_chunk_30s",
+      "reference_ms": 15.654292074032128,
+      "kernel_ms": 4.700895515270531,
+      "speedup": 3.3300659466223514,
+      "max_absolute_error": 0.0,
+      "relative_rms_error": 0.0,
+      "trials_ms": {
+        "reference": [
+          15.654292074032128,
+          15.725790988653898,
+          15.629020985215902
+        ],
+        "kernel": [
+          4.7050409484654665,
+          4.1867089457809925,
+          4.700895515270531
+        ]
+      }
+    },
+    {
+      "name": "filterbank_2s",
+      "reference_ms": 74.95031249709427,
+      "kernel_ms": 67.82937492243946,
+      "speedup": 1.104983092985854,
+      "max_absolute_error": 0.0,
+      "relative_rms_error": 0.0,
+      "trials_ms": {
+        "reference": [
+          74.95031249709427,
+          75.28345845639706,
+          74.41383344121277
+        ],
+        "kernel": [
+          67.82937492243946,
+          68.71016696095467,
+          67.79820821247995
+        ]
+      }
+    }
+  ],
+  "macos_version": "26.6.2",
+  "cpu_affinity": null,
+  "source_sha256": {
+    "dsp2/utils.py": "cb53eb6fba8dbec434a189d14510b4302a5d3734e20e30ccc46b96103c2dad9c",
+    "dsp2/cpu_kernel.py": "adb618e5e0010a0330d90fdedec27e68514fbab0cb2b665d9ceb0fc33d184e3d",
+    "dsp2/cuda_kernel.py": "9f9bede614c585d6747608eea363cabd7d26d54fd801f3281496c1588082b147",
+    "dsp2/mps_kernel.py": "832b7d6773a3a217fdb4f793c36256def7b49f0304b52acec1face09508b17b1",
+    "dsp2/csrc/shift_frequency_cpu.cpp": "31826abcbb09b04199d0518baf9c17d0e7fe26fa511ab39533af139be7b7db47",
+    "dsp2/csrc/shift_frequency_mps.metal": "d3556852e4aa8bdf642dc8dd7aef4537129638edaacb6ccf6c64808c2d8544ad"
+  }
+}

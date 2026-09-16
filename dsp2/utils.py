@@ -89,7 +89,7 @@ class _ShiftFrequency(torch.autograd.Function):
 
 
 def shift_frequency(x: Tensor, f: Tensor, sr: int, n: int = 1) -> Tensor:
-    """Fixed-point modulation with fused CPU/CUDA kernels when available.
+    """Fixed-point modulation with fused CPU/CUDA/MPS kernels when available.
 
     Frequencies are non-learnable. Other devices, real inputs, and broadcast
     band shapes retain the original PyTorch implementation.
@@ -104,12 +104,18 @@ def shift_frequency(x: Tensor, f: Tensor, sr: int, n: int = 1) -> Tensor:
         from .cuda_kernel import is_available, shift_frequency_cuda
 
         kernel = partial(shift_frequency_cuda, sample_rate=sr)
+    elif x.device.type == "mps" and x.dtype == torch.complex64:
+        from .mps_kernel import is_available, shift_frequency_mps
+
+        kernel = partial(shift_frequency_mps, sample_rate=sr)
     else:
         return _shift_frequency_reference(x, f, sr, n)
     if not is_available():
         return _shift_frequency_reference(x, f, sr, n)
     if x.device.type == "cuda":
         values = f.to(device=x.device).contiguous()
+    elif x.device.type == "mps":
+        values = f.to(device=x.device, dtype=torch.float32).contiguous()
     else:
         values = _phase_steps(x, f, sr)
     return _ShiftFrequency.apply(x, values, n % (1 << 32), kernel, False)

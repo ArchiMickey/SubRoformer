@@ -9,7 +9,10 @@ from training_utils import build_model
 
 
 @pytest.mark.parametrize("num_stems", [1, 4])
-def test_dsp2_checkpoint_forward_backward_and_step(num_stems):
+@pytest.mark.parametrize("device", ["cpu", "mps"])
+def test_dsp2_checkpoint_forward_backward_and_step(num_stems, device):
+    if device == "mps" and not torch.backends.mps.is_available():
+        pytest.skip("MPS is unavailable")
     config = tiny_config()
     config.model.num_stems = num_stems
     original = build_model(config)
@@ -19,8 +22,9 @@ def test_dsp2_checkpoint_forward_backward_and_step(num_stems):
     assert isinstance(model.sb_filter, SubbandFilter)
     model.load_state_dict(original.state_dict(), strict=True)
     original.load_state_dict(model.state_dict(), strict=True)
+    model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    audio = torch.randn(1, 2, 129, requires_grad=True)
+    audio = torch.randn(1, 2, 129, device=device, requires_grad=True)
     output = model(audio)
     expected_shape = (1, 2, 129) if num_stems == 1 else (1, num_stems, 2, 129)
     assert output.shape == expected_shape

@@ -1296,6 +1296,10 @@ class SBRoformer(nn.Module):
             )
             if self.dsp_backend == "dsp":
                 self.sb_filter = InferenceSubbandFilter(self.sb_filter, level=3)
+            else:
+                from dsp2.inference_optimized import InferenceSubbandFilter as FixedPointInferenceSubbandFilter
+
+                self.sb_filter = FixedPointInferenceSubbandFilter(self.sb_filter)
         else:
             self.sb_filter = None
 

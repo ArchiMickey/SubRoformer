@@ -1,0 +1,130 @@
+{
+  "backend": "torch",
+  "device": "mps",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "hardware": "Apple M5 Pro",
+  "torch_version": "2.14.0",
+  "samples": 96000,
+  "batch_size": 1,
+  "threads": 4,
+  "warmup": 3,
+  "min_run_time": 2.0,
+  "trials_ms": {
+    "reference": [
+      665.6409170245752,
+      669.2172079347074,
+      667.0133341103792
+    ],
+    "kernel": [
+      629.150895983912,
+      627.4588749511167,
+      623.5728539759293
+    ]
+  },
+  "reference_ms": 667.0133341103792,
+  "kernel_ms": 627.4588749511167,
+  "speedup": 1.063039126129731,
+  "errors": {
+    "noise": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "silence": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "quiet": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    "music": {
+      "bitwise_equal": true,
+      "max_absolute_error": 0.0,
+      "per_stem_absolute_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "per_stem_relative_rms": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    }
+  },
+  "reference_filterbank": "uncached DSP2 reference",
+  "kernel_filterbank": "DSP2 Metal with filter FFT cache",
+  "filter_cache_bytes": 148258080,
+  "timing_input": "music",
+  "output_device": "cpu",
+  "source_sha256": {
+    "dsp2/utils.py": "cb53eb6fba8dbec434a189d14510b4302a5d3734e20e30ccc46b96103c2dad9c",
+    "dsp2/mps_kernel.py": "832b7d6773a3a217fdb4f793c36256def7b49f0304b52acec1face09508b17b1",
+    "dsp2/csrc/shift_frequency_mps.metal": "d3556852e4aa8bdf642dc8dd7aef4537129638edaacb6ccf6c64808c2d8544ad",
+    "dsp2/inference_optimized.py": "c587fa3189ecf2918a62c045095f071f4cfb790f33e02b1a7e12b816aaf2c160",
+    "dsp/inference_optimized.py": "f395b1b0998354e2effaa1cb7fc3eba842d6d29035c5dde81e3f3e0699113eca",
+    "coreml_inference.py": "7c51609509b0a65e04e26ccae9b50dbf919b1b2a690b6896cc33acf817f205db",
+    "model.py": "c0ac63eca18b7d6243eb44da01de01912d45bd6bffcd85770c2276dae27f627f",
+    "benchmarks/benchmark_dsp2_mps_model.py": "6a9698b134e1482f5a6b793e93057740e7d71f1712e3aa5e4e8647beaf7f88fc",
+    "benchmarks/benchmark_dsp2_kernels.py": "bed3a26ab42a1ce49dfec91a09c4360c7952cea587a8129ef1134493126a91d9"
+  },
+  "input_sha256": {
+    "configs/sbroformer_base_4stem_silu.yaml": "84699b0e74f93fb77e4d5cae9877bf75c48f2203e9035795dcadb1de798927b0",
+    "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors": "c0ac06e4a16ce7e765ea6622b7d58bfa58957a03cab0fc42b15387a399c6c177",
+    "Netrum & Halvorsen - Phoenix \uff5c Synthwave \uff5c NCS - Copyright Free Music [yH88qRmgkGI].wav": "e9f65f95e01e9c4551681d4050673aa0a1881b3fa745e1d412dc0db1b09214ad"
+  }
+}

@@ -44,6 +44,7 @@ class CoreMLSeparator(torch.nn.Module):
         self.compiled = compiled
         self.segment_samples = int(config.audio.chunk_size)
         dsp_config = copy.deepcopy(config)
+        dsp_config.model.setdefault("dsp_backend", "dsp2")
         for key in ("n_layers", "n_pre_layers", "n_post_layers"):
             dsp_config.model[key] = 0
         self.dsp = build_model(dsp_config).eval()
