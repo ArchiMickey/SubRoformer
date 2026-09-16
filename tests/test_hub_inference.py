@@ -127,6 +127,26 @@ def test_default_checkpoint_is_fp16():
     assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
 
 
+@pytest.mark.parametrize("backend", [None, "dsp", "dsp2"])
+def test_inference_dsp_default_and_explicit_override(tmp_path, backend):
+    config = tiny_config()
+    if backend is not None:
+        config.model.dsp_backend = backend
+    path = tmp_path / "config.yaml"
+    OmegaConf.save(config, path)
+    resolved = inference.load_inference_config(path)
+    assert resolved.model.dsp_backend == (backend or "dsp2")
+    assert inference.load_config(path) == config
+
+
+def test_inference_dsp_default_preserves_global_frontend(tmp_path):
+    config = tiny_config()
+    config.model.frontend_type = "global_stft_bs"
+    path = tmp_path / "config.yaml"
+    OmegaConf.save(config, path)
+    assert "dsp_backend" not in inference.load_inference_config(path).model
+
+
 def test_cli_config_and_checkpoint_are_optional(monkeypatch):
     calls = []
     monkeypatch.setattr(inference, "separate_file", lambda *args, **kwargs: calls.append((args, kwargs)) or [])

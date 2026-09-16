@@ -46,6 +46,9 @@ py-modules = [
 [tool.setuptools.packages.find]
 include = ["dsp*"]
 
+[tool.setuptools.package-data]
+dsp2 = ["csrc/*.cpp"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

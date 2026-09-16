@@ -1223,6 +1223,7 @@ class SBRoformer(nn.Module):
         attn_backend: str | None = None,
         use_flash_attention: bool | None = None,
         gradient_checkpointing: bool = False,
+        dsp_backend: str = "dsp",
         **kwargs,
     ) -> None:
         super().__init__()
@@ -1241,6 +1242,11 @@ class SBRoformer(nn.Module):
         self.subband_n_bands = int(subband_n_bands or n_bands or 118)
         self.hop_length = int(hop_length)
         self.frontend_type = self._normalize_frontend_type(frontend_type)
+        self.dsp_backend = str(dsp_backend).lower()
+        if self.dsp_backend not in {"dsp", "dsp2"}:
+            raise ValueError(f"Unsupported dsp_backend: {dsp_backend}")
+        if self.dsp_backend == "dsp2" and self.frontend_type != "waveform_subband":
+            raise ValueError("dsp_backend='dsp2' requires frontend_type='waveform_subband'")
         self.analysis_type = self._normalize_analysis_type(analysis_type)
         self.mask_mode = self._resolve_mask_mode(mask_mode, cnn_mask_mode, stft_mask_mode)
         self.cnn_mask_mode = self.mask_mode
@@ -1275,7 +1281,12 @@ class SBRoformer(nn.Module):
         )
         self.model_n_bands = len(banks)
         if self.frontend_type == "waveform_subband":
-            self.sb_filter = SubbandFilter(
+            filter_class = SubbandFilter
+            if self.dsp_backend == "dsp2":
+                from dsp2 import SubbandFilter as FixedPointSubbandFilter
+
+                filter_class = FixedPointSubbandFilter
+            self.sb_filter = filter_class(
                 sample_rate,
                 banks,
                 self.sb_factor,
@@ -1283,7 +1294,8 @@ class SBRoformer(nn.Module):
                 bandpass_filter_len=bandpass_filter_len,
                 upsample_filter_len=upsample_filter_len,
             )
-            self.sb_filter = InferenceSubbandFilter(self.sb_filter, level=3)
+            if self.dsp_backend == "dsp":
+                self.sb_filter = InferenceSubbandFilter(self.sb_filter, level=3)
         else:
             self.sb_filter = None
 

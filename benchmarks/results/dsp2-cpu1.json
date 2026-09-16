@@ -1,0 +1,98 @@
+{
+  "device": "cpu",
+  "threads": 1,
+  "torch_version": "2.9.1+cu128",
+  "processor": "x86_64",
+  "gpu": null,
+  "results": [
+    {
+      "name": "analysis_chunk",
+      "reference_ms": 0.1995156868360937,
+      "kernel_ms": 0.0704431205522269,
+      "speedup": 2.832294839751906,
+      "max_absolute_error": 4.915124804938387e-07,
+      "relative_rms_error": 4.7173632111707775e-08,
+      "trials_ms": {
+        "reference": [
+          0.19942831248044968,
+          0.2003373485058546,
+          0.1995156868360937
+        ],
+        "kernel": [
+          0.07042639213614166,
+          0.0704431205522269,
+          0.07056033192202449
+        ]
+      }
+    },
+    {
+      "name": "synthesis_chunk",
+      "reference_ms": 11.704951105639338,
+      "kernel_ms": 3.2724923454225063,
+      "speedup": 3.576769590313016,
+      "max_absolute_error": 4.915124804938387e-07,
+      "relative_rms_error": 4.699719013956383e-08,
+      "trials_ms": {
+        "reference": [
+          11.704951105639338,
+          11.377714993432164,
+          12.848274759016931
+        ],
+        "kernel": [
+          3.2724923454225063,
+          3.2530306139960885,
+          3.3517815405502915
+        ]
+      }
+    },
+    {
+      "name": "synthesis_chunk_30s",
+      "reference_ms": 379.48557431809604,
+      "kernel_ms": 185.03064988180995,
+      "speedup": 2.0509335861950224,
+      "max_absolute_error": 5.960464477539062e-07,
+      "relative_rms_error": 4.6994291125201926e-08,
+      "trials_ms": {
+        "reference": [
+          379.48557431809604,
+          378.88908269815147,
+          379.5240118633956
+        ],
+        "kernel": [
+          185.03064988180995,
+          185.49082707613707,
+          184.7592438571155
+        ]
+      }
+    },
+    {
+      "name": "filterbank_2s",
+      "reference_ms": 612.19871789217,
+      "kernel_ms": 517.8975239396095,
+      "speedup": 1.1820846588244291,
+      "max_absolute_error": 1.430511474609375e-06,
+      "relative_rms_error": 2.6488208959563053e-07,
+      "trials_ms": {
+        "reference": [
+          612.19871789217,
+          589.1985963098705,
+          619.3030909635127
+        ],
+        "kernel": [
+          519.3721312098205,
+          501.94637454114854,
+          517.8975239396095
+        ]
+      }
+    }
+  ],
+  "cpu_affinity": [
+    8
+  ],
+  "source_sha256": {
+    "dsp2/utils.py": "b5b7197e1b324813f0f1e4245e0c3757f956bd8368aa52c02f98a2be94fe6f27",
+    "dsp2/cpu_kernel.py": "adb618e5e0010a0330d90fdedec27e68514fbab0cb2b665d9ceb0fc33d184e3d",
+    "dsp2/cuda_kernel.py": "9f9bede614c585d6747608eea363cabd7d26d54fd801f3281496c1588082b147",
+    "dsp2/csrc/shift_frequency_cpu.cpp": "31826abcbb09b04199d0518baf9c17d0e7fe26fa511ab39533af139be7b7db47"
+  }
+}

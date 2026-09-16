@@ -9,7 +9,16 @@ def test_release_contains_only_base_configs():
     root = Path(__file__).resolve().parents[1]
     expected = {f"sbroformer_base_{stem}.yaml" for stem in ["4stem", "vocals", "bass", "drums", "other"]}
     expected.add("sbroformer_base_4stem_silu.yaml")
+    expected.add("sbroformer_base_4stem_silu_dsp2.yaml")
     assert {path.name for path in (root / "configs").glob("*.yaml")} == expected
+
+
+def test_release_dsp2_config_contract():
+    root = Path(__file__).resolve().parents[1]
+    original = load_config(root / "configs/sbroformer_base_4stem_silu.yaml")
+    config = load_config(root / "configs/sbroformer_base_4stem_silu_dsp2.yaml")
+    assert config.model.pop("dsp_backend") == "dsp2"
+    assert config == original
 
 
 def test_release_silu_config_contract():
