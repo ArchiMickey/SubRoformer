@@ -64,6 +64,25 @@ def test_app_branding(application):
         window.close()
 
 
+def test_help_button_shows_shortcuts_and_macos_requirements(application, monkeypatch):
+    from app.help import HelpDialog
+
+    dialogs = []
+    monkeypatch.setattr(HelpDialog, "exec", lambda dialog: dialogs.append(dialog))
+    window = MainWindow()
+    try:
+        window.help_button.click()
+        assert len(dialogs) == 1
+        dialog = dialogs[0]
+        text = "\n".join(label.text() for label in dialog.findChildren(QLabel))
+        for expected in ("Space", "Shift+2–5", "backtick", "tilde", "Vocals / Bass / Drums / Others",
+                     "macOS 15", "Apple Silicon", "About This Mac", "cpu", "MPS-enabled PyTorch"):
+            assert expected in text
+        assert "ValueError: MPS is unavailable" in text
+    finally:
+        window.close()
+
+
 def test_action_buttons_beside_playback(application):
     window = MainWindow()
     try:
