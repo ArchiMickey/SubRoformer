@@ -26,7 +26,7 @@ DEFAULT_CHECKPOINT = "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_
 def load_inference_config(path: str | Path):
     config = load_config(path)
     if config.model.get("frontend_type", "waveform_subband") == "waveform_subband":
-        config.model.setdefault("dsp_backend", "dsp2")
+        config.model.setdefault("dsp_backend", "dsp3")
     return config
 
 
@@ -390,7 +390,7 @@ def separate_file(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Separate an audio file without reference stems")
-    parser.add_argument("--config", help="Local config; missing files fall back to the HF Base config; waveform inference defaults to dsp2")
+    parser.add_argument("--config", help="Local config; missing files fall back to the HF Base config; waveform inference defaults to dsp3")
     parser.add_argument("--checkpoint", help="Local weights; missing files fall back to the HF Base checkpoint")
     parser.add_argument("--repo_id", default=DEFAULT_REPO_ID)
     parser.add_argument("--revision", help="HF branch, tag, or commit")

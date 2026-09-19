@@ -8,6 +8,10 @@ Representation for Music Source Separation**.
 Music source separation into **vocals, bass, drums, and other**, with a local
 desktop app and tools for SubRoformer's training, evaluation, and inference.
 
+The perceptual-checkpoint config and waveform inference now default to DSP3,
+with native CPU/CUDA/MPS modulation and the existing MPS FFT cache. Explicit
+DSP/DSP2 configs remain supported. See [DSP3 validation](docs/dsp3.md).
+
 ## Contributions
 
 - **Subband time-domain representation:** exposes spectral structure while
