@@ -1,0 +1,16 @@
+{
+  "source": "../SBRoformer local dsp3 snapshot",
+  "date": "2026-09-20",
+  "source_sha256": {
+    "dsp3/LICENSE": "97701d1f07fe51066881d92e0e79b93aa547768387c8389b82b53ec5f1468366",
+    "dsp3/README.md": "c552c1b6402460ab19d5eeb82dfb1a5c9e398caa7f8430ad1f9dbd0f767bde48",
+    "dsp3/__init__.py": "64014a3ad44c1516267656438f1db9c9396ba547a10638d2241e0b83fa4c7a94",
+    "dsp3/cpu_kernel.py": "6bd84d86ec84ed8c9ceac90e27774a1264389df767f2f5f519048d370abc6118",
+    "dsp3/csrc/shift_frequency_cpu.cpp": "0875348f572ddeb5062ca5e061164589750b8a25358dfa0bc3900afa0d63efd4",
+    "dsp3/csrc/shift_frequency_mps.metal": "d3556852e4aa8bdf642dc8dd7aef4537129638edaacb6ccf6c64808c2d8544ad",
+    "dsp3/cuda_kernel.py": "3db5daa0b775a9e3d85af37c9e8d29865246d49649242f62af45151716dd3201",
+    "dsp3/mps_kernel.py": "0e6d1408593cb4f74a6d4c40274c30d55b90b62b3db939de17482c6b826f1d87",
+    "dsp3/subband_fast_triangle.py": "f8b251a12b192846594f7e55777f895a56351734a494d7f652f8eb30d4eb695f",
+    "dsp3/utils.py": "cb53eb6fba8dbec434a189d14510b4302a5d3734e20e30ccc46b96103c2dad9c"
+  }
+}

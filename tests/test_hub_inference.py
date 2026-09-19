@@ -126,11 +126,11 @@ def test_default_checkpoint_is_fp16():
     assert inference.DEFAULT_CONFIG == "configs/sbroformer_base_4stem_silu.yaml"
     assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
     config = inference.load_config(Path(__file__).resolve().parents[1] / inference.DEFAULT_CONFIG)
-    assert config.model.dsp_backend == "dsp2"
+    assert config.model.dsp_backend == "dsp3"
     assert config.model.fusion_type == "silu"
 
 
-@pytest.mark.parametrize("backend", [None, "dsp", "dsp2"])
+@pytest.mark.parametrize("backend", [None, "dsp", "dsp2", "dsp3"])
 def test_inference_dsp_default_and_explicit_override(tmp_path, backend):
     config = tiny_config()
     if backend is not None:
@@ -138,7 +138,7 @@ def test_inference_dsp_default_and_explicit_override(tmp_path, backend):
     path = tmp_path / "config.yaml"
     OmegaConf.save(config, path)
     resolved = inference.load_inference_config(path)
-    assert resolved.model.dsp_backend == (backend or "dsp2")
+    assert resolved.model.dsp_backend == (backend or "dsp3")
     assert inference.load_config(path) == config
 
 

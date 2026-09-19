@@ -1,0 +1,3553 @@
+{
+  "device": "cuda",
+  "torch": "2.9.1+cu128",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "checkpoint": "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors",
+  "checkpoint_sha256": "c0ac06e4a16ce7e765ea6622b7d58bfa58957a03cab0fc42b15387a399c6c177",
+  "weights": "FP32 model parameters loaded strictly from checkpoint",
+  "protocol": "MUSDB mixture excerpts at 10s; 48kHz; two-second windows; hop ratio 4; batch 1; TF32 disabled",
+  "scope": "Output parity, not a full-song SDR or listening evaluation",
+  "source_sha256": {
+    "dsp2/__init__.py": "20450c2d2a7469ddcdbda78e9515a2d3e84d38d2c2c9b4dfbd8b77c8754fe7aa",
+    "dsp2/cpu_kernel.py": "adb618e5e0010a0330d90fdedec27e68514fbab0cb2b665d9ceb0fc33d184e3d",
+    "dsp2/csrc/shift_frequency_cpu.cpp": "31826abcbb09b04199d0518baf9c17d0e7fe26fa511ab39533af139be7b7db47",
+    "dsp2/csrc/shift_frequency_mps.metal": "d3556852e4aa8bdf642dc8dd7aef4537129638edaacb6ccf6c64808c2d8544ad",
+    "dsp2/cuda_kernel.py": "9f9bede614c585d6747608eea363cabd7d26d54fd801f3281496c1588082b147",
+    "dsp2/inference_optimized.py": "c587fa3189ecf2918a62c045095f071f4cfb790f33e02b1a7e12b816aaf2c160",
+    "dsp2/mps_kernel.py": "832b7d6773a3a217fdb4f793c36256def7b49f0304b52acec1face09508b17b1",
+    "dsp2/subband_fast_triangle.py": "f8b251a12b192846594f7e55777f895a56351734a494d7f652f8eb30d4eb695f",
+    "dsp2/utils.py": "cb53eb6fba8dbec434a189d14510b4302a5d3734e20e30ccc46b96103c2dad9c",
+    "dsp3/__init__.py": "64014a3ad44c1516267656438f1db9c9396ba547a10638d2241e0b83fa4c7a94",
+    "dsp3/cpu_kernel.py": "12dcbbe950a4dc8af5fb93b7de17981dc6424f06229f56435a4911aca31f33b6",
+    "dsp3/csrc/shift_frequency_cpu.cpp": "2d3ec5f03a6bebe5badac5c404fc76dd33d1aac686929a77e0a077290a3344ab",
+    "dsp3/csrc/shift_frequency_mps.metal": "d3556852e4aa8bdf642dc8dd7aef4537129638edaacb6ccf6c64808c2d8544ad",
+    "dsp3/cuda_kernel.py": "3db5daa0b775a9e3d85af37c9e8d29865246d49649242f62af45151716dd3201",
+    "dsp3/inference_optimized.py": "7aa409dcd31ec2077d698932b588b9f99bc5bd2c4e82441543f022fc55713899",
+    "dsp3/mps_kernel.py": "0e6d1408593cb4f74a6d4c40274c30d55b90b62b3db939de17482c6b826f1d87",
+    "dsp3/subband_fast_triangle.py": "f8b251a12b192846594f7e55777f895a56351734a494d7f652f8eb30d4eb695f",
+    "dsp3/utils.py": "cb53eb6fba8dbec434a189d14510b4302a5d3734e20e30ccc46b96103c2dad9c",
+    "inference.py": "016bce40b39cc26e113c3decf4536c764d86ee81aafdef65543aa7a7ec8213cf",
+    "model.py": "0f3eedf20a2ad488850895b323cb87a31c913e4880dcd11b43765b97aa7f165b"
+  },
+  "results": [
+    {
+      "track": "AM Contra - Heart Peripheral",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "AM Contra - Heart Peripheral",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "AM Contra - Heart Peripheral",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "AM Contra - Heart Peripheral",
+      "seconds": 30,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "AM Contra - Heart Peripheral",
+      "seconds": 30,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "AM Contra - Heart Peripheral",
+      "seconds": 30,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Al James - Schoolboy Facination",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Al James - Schoolboy Facination",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Al James - Schoolboy Facination",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Angels In Amplifiers - I'm Alright",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Angels In Amplifiers - I'm Alright",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Angels In Amplifiers - I'm Alright",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Arise - Run Run Run",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Arise - Run Run Run",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Arise - Run Run Run",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "BKS - Bulldozer",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "BKS - Bulldozer",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "BKS - Bulldozer",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "BKS - Too Much",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "BKS - Too Much",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "BKS - Too Much",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Ben Carrigan - We'll Talk About It All Tonight",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Ben Carrigan - We'll Talk About It All Tonight",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Ben Carrigan - We'll Talk About It All Tonight",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Bobby Nobody - Stitch Up",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Bobby Nobody - Stitch Up",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Bobby Nobody - Stitch Up",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Buitraker - Revo X",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Buitraker - Revo X",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Buitraker - Revo X",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Carlos Gonzalez - A Place For Us",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Carlos Gonzalez - A Place For Us",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Carlos Gonzalez - A Place For Us",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Cristina Vane - So Easy",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Cristina Vane - So Easy",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Cristina Vane - So Easy",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Detsky Sad - Walkie Talkie",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Detsky Sad - Walkie Talkie",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Detsky Sad - Walkie Talkie",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Enda Reilly - Cur An Long Ag Seol",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Enda Reilly - Cur An Long Ag Seol",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Enda Reilly - Cur An Long Ag Seol",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Forkupines - Semantics",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Forkupines - Semantics",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Forkupines - Semantics",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Georgia Wonder - Siren",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Georgia Wonder - Siren",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Georgia Wonder - Siren",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Girls Under Glass - We Feel Alright",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Girls Under Glass - We Feel Alright",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Girls Under Glass - We Feel Alright",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Hollow Ground - Ill Fate",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Hollow Ground - Ill Fate",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Hollow Ground - Ill Fate",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "James Elder & Mark M Thompson - The English Actor",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "James Elder & Mark M Thompson - The English Actor",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "James Elder & Mark M Thompson - The English Actor",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Juliet's Rescue - Heartbeats",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Juliet's Rescue - Heartbeats",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Juliet's Rescue - Heartbeats",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Little Chicago's Finest - My Own",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Little Chicago's Finest - My Own",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Little Chicago's Finest - My Own",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Louis Cressy Band - Good Time",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Louis Cressy Band - Good Time",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Louis Cressy Band - Good Time",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Lyndsey Ollard - Catching Up",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Lyndsey Ollard - Catching Up",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Lyndsey Ollard - Catching Up",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "M.E.R.C. Music - Knockout",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "M.E.R.C. Music - Knockout",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "M.E.R.C. Music - Knockout",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Moosmusic - Big Dummy Shake",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Moosmusic - Big Dummy Shake",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Moosmusic - Big Dummy Shake",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Motor Tapes - Shore",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Motor Tapes - Shore",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Motor Tapes - Shore",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Mu - Too Bright",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Mu - Too Bright",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Mu - Too Bright",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Nerve 9 - Pray For The Rain",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Nerve 9 - Pray For The Rain",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Nerve 9 - Pray For The Rain",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "PR - Happy Daze",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "PR - Happy Daze",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "PR - Happy Daze",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "PR - Oh No",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "PR - Oh No",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "PR - Oh No",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Punkdisco - Oral Hygiene",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Punkdisco - Oral Hygiene",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Punkdisco - Oral Hygiene",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Raft Monk - Tiring",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Raft Monk - Tiring",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Raft Monk - Tiring",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Sambasevam Shanmugam - Kaathaadi",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Sambasevam Shanmugam - Kaathaadi",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Sambasevam Shanmugam - Kaathaadi",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Secretariat - Borderline",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Secretariat - Borderline",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Secretariat - Borderline",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Secretariat - Over The Top",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Secretariat - Over The Top",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Secretariat - Over The Top",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Side Effects Project - Sing With Me",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Side Effects Project - Sing With Me",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Side Effects Project - Sing With Me",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Signe Jakobsen - What Have You Done To Me",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Signe Jakobsen - What Have You Done To Me",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Signe Jakobsen - What Have You Done To Me",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Skelpolu - Resurrection",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Skelpolu - Resurrection",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Skelpolu - Resurrection",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Speak Softly - Broken Man",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Speak Softly - Broken Man",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Speak Softly - Broken Man",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Speak Softly - Like Horses",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Speak Softly - Like Horses",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Speak Softly - Like Horses",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Doppler Shift - Atrophy",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Doppler Shift - Atrophy",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Doppler Shift - Atrophy",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Easton Ellises (Baumi) - SDRNR",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Easton Ellises (Baumi) - SDRNR",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Easton Ellises (Baumi) - SDRNR",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Easton Ellises - Falcon 69",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Easton Ellises - Falcon 69",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Easton Ellises - Falcon 69",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Long Wait - Dark Horses",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Long Wait - Dark Horses",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Long Wait - Dark Horses",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Mountaineering Club - Mallory",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Mountaineering Club - Mallory",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Mountaineering Club - Mallory",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Sunshine Garcia Band - For I Am The Moon",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Sunshine Garcia Band - For I Am The Moon",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "The Sunshine Garcia Band - For I Am The Moon",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Timboz - Pony",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Timboz - Pony",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Timboz - Pony",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Tom McKenzie - Directions",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Tom McKenzie - Directions",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Tom McKenzie - Directions",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Triviul feat. The Fiend - Widow",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Triviul feat. The Fiend - Widow",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Triviul feat. The Fiend - Widow",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "We Fell From The Sky - Not You",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "We Fell From The Sky - Not You",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "We Fell From The Sky - Not You",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Zeno - Signs",
+      "seconds": 2.0,
+      "precision": "fp32",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Zeno - Signs",
+      "seconds": 2.0,
+      "precision": "fp16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    },
+    {
+      "track": "Zeno - Signs",
+      "seconds": 2.0,
+      "precision": "bf16",
+      "stems": {
+        "vocals": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "bass": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "drums": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        },
+        "other": {
+          "max_absolute_error": 0.0,
+          "relative_rms_error": 0.0
+        }
+      }
+    }
+  ]
+}

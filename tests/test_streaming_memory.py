@@ -28,7 +28,7 @@ def test_real_model_is_bit_identical_to_legacy(device, joint):
 
 @pytest.mark.parametrize("joint", [False, True])
 @pytest.mark.parametrize("mono", [False, True])
-@pytest.mark.parametrize("backend", ["dsp", "dsp2"])
+@pytest.mark.parametrize("backend", ["dsp", "dsp2", "dsp3"])
 def test_file_export_matches_legacy_samples(tmp_path, joint, mono, backend):
     config = tiny_config(target_instrument=None if joint else "vocals")
     config.model.dsp_backend = backend

@@ -1,8 +1,18 @@
+import ast
 from pathlib import Path
 
 import pytest
 
 from app import build
+
+
+def test_bundle_includes_dsp3_native_sources():
+    root = Path(__file__).resolve().parents[2]
+    spec = ast.parse((root / "app" / "SubStemStudio.spec").read_text())
+    constants = [node.value for node in ast.walk(spec) if isinstance(node, ast.Constant)]
+    assert "dsp3/csrc" in constants
+    for name in ("shift_frequency_cpu.cpp", "shift_frequency_mps.metal"):
+        assert (root / "dsp3" / "csrc" / name).is_file()
 
 
 @pytest.mark.parametrize("platform", ["darwin", "win32", "linux"])

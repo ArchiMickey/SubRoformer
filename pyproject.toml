@@ -48,6 +48,7 @@ include = ["dsp*"]
 
 [tool.setuptools.package-data]
 dsp2 = ["csrc/*.cpp", "csrc/*.metal"]
+dsp3 = ["csrc/*.cpp", "csrc/*.metal", "LICENSE", "source_manifest.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

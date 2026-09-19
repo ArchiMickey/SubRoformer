@@ -1243,10 +1243,10 @@ class SBRoformer(nn.Module):
         self.hop_length = int(hop_length)
         self.frontend_type = self._normalize_frontend_type(frontend_type)
         self.dsp_backend = str(dsp_backend).lower()
-        if self.dsp_backend not in {"dsp", "dsp2"}:
+        if self.dsp_backend not in {"dsp", "dsp2", "dsp3"}:
             raise ValueError(f"Unsupported dsp_backend: {dsp_backend}")
-        if self.dsp_backend == "dsp2" and self.frontend_type != "waveform_subband":
-            raise ValueError("dsp_backend='dsp2' requires frontend_type='waveform_subband'")
+        if self.dsp_backend in {"dsp2", "dsp3"} and self.frontend_type != "waveform_subband":
+            raise ValueError(f"dsp_backend='{self.dsp_backend}' requires frontend_type='waveform_subband'")
         self.analysis_type = self._normalize_analysis_type(analysis_type)
         self.mask_mode = self._resolve_mask_mode(mask_mode, cnn_mask_mode, stft_mask_mode)
         self.cnn_mask_mode = self.mask_mode
@@ -1286,6 +1286,10 @@ class SBRoformer(nn.Module):
                 from dsp2 import SubbandFilter as FixedPointSubbandFilter
 
                 filter_class = FixedPointSubbandFilter
+            elif self.dsp_backend == "dsp3":
+                from dsp3 import SubbandFilter as FusedSubbandFilter
+
+                filter_class = FusedSubbandFilter
             self.sb_filter = filter_class(
                 sample_rate,
                 banks,
@@ -1296,10 +1300,14 @@ class SBRoformer(nn.Module):
             )
             if self.dsp_backend == "dsp":
                 self.sb_filter = InferenceSubbandFilter(self.sb_filter, level=3)
-            else:
+            elif self.dsp_backend == "dsp2":
                 from dsp2.inference_optimized import InferenceSubbandFilter as FixedPointInferenceSubbandFilter
 
                 self.sb_filter = FixedPointInferenceSubbandFilter(self.sb_filter)
+            else:
+                from dsp3.inference_optimized import InferenceSubbandFilter as FusedInferenceSubbandFilter
+
+                self.sb_filter = FusedInferenceSubbandFilter(self.sb_filter)
         else:
             self.sb_filter = None
 

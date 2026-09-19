@@ -8,11 +8,12 @@ model:
   dsp_backend: dsp2
 ```
 
-The default perceptual-checkpoint config, `sbroformer_base_4stem_silu.yaml`,
-explicitly selects `dsp2`. Training and evaluation use `dsp`, including its
+The default perceptual-checkpoint config now selects [DSP3](dsp3.md).
+`sbroformer_base_4stem_silu_dsp2.yaml` explicitly retains `dsp2`.
+Training and evaluation use `dsp`, including its
 level-3 inference filter caching, when the config omits `dsp_backend`.
-PyTorch and Core ML inference default to `dsp2` when the config omits `dsp_backend`;
-set it explicitly to `dsp` to retain legacy inference.
+PyTorch and Core ML inference default to `dsp3` when the config omits `dsp_backend`;
+set it explicitly to `dsp` or `dsp2` to retain either previous backend.
 `dsp2` supports only the `waveform_subband` frontend. It uses the same FIR
 filters and checkpoint keys, so existing PyTorch checkpoints load strictly
 without conversion. Keep the rest of the checkpoint's model config unchanged.
@@ -121,8 +122,8 @@ The experimental legacy `optimize_for_inference` helper still rejects DSP2
 rather than silently reverting to legacy modulation.
 
 The app keeps Core ML as the default neural backend on macOS 15+, selects MPS
-when available, and now defaults its DSP to DSP2. The PyTorch app path also uses
-DSP2 by default. The compiled Core ML mask network and checkpoint are unchanged;
+when available. DSP3 now replaces DSP2 as the app default; this section records
+the earlier DSP2 validation. The compiled Core ML mask network and checkpoint are unchanged;
 no re-export or download is required for this DSP change. Explicit
 `dsp_backend: dsp` configurations remain respected, and CPU remains selectable.
 

@@ -19,11 +19,11 @@ default. With PyTorch 2.14+, explicitly select `--device mps` to run this DSP on
 the GPU as well. Rolling overlap-add and public audio tensors remain on CPU.
 Exact DSP buffers from the source checkpoint are bundled
 in `dsp.safetensors`. No full PyTorch checkpoint is downloaded for this backend.
-The runtime defaults to fixed-point DSP2 when the artifact config omits
+The runtime defaults to fixed-point DSP3 when the artifact config omits
 `dsp_backend`. On MPS this uses the native Metal modulation kernel and retains
 the inference filter FFT cache. Explicit `dsp_backend: dsp` remains supported.
 This changes only the runtime DSP, not the compiled neural network; see
-[DSP2 parity and performance checks](dsp2.md).
+[DSP3 parity and validation limits](dsp3.md).
 Core ML uses `CPU_AND_GPU`; this is not an Apple Neural Engine deployment, nor
 a claim of improved speed. Core ML schedules supported operations itself.
 The earlier Base artifacts remain under `coreml/base-4stem-v1/` (FP32) and

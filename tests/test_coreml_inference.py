@@ -10,6 +10,7 @@ import coreml_inference
 import inference
 from model_utils import build_model
 from dsp2 import SubbandFilter
+from dsp3 import SubbandFilter as DSP3SubbandFilter
 from dsp.inference_optimized import InferenceSubbandFilter
 from tests.helpers import tiny_config
 
@@ -18,8 +19,8 @@ def test_default_artifact_is_fp16():
     assert coreml_inference.COREML_DIRECTORY == "coreml/base-4stem-perceptual-200k-fp16-v1"
 
 
-@pytest.mark.parametrize("backend,expected", [(None, SubbandFilter), ("dsp2", SubbandFilter), ("dsp", InferenceSubbandFilter)])
-def test_coreml_defaults_to_dsp2_without_overriding_explicit_backend(backend, expected):
+@pytest.mark.parametrize("backend,expected", [(None, DSP3SubbandFilter), ("dsp3", DSP3SubbandFilter), ("dsp2", SubbandFilter), ("dsp", InferenceSubbandFilter)])
+def test_coreml_defaults_to_dsp3_without_overriding_explicit_backend(backend, expected):
     config = tiny_config()
     if backend is not None:
         config.model.dsp_backend = backend
