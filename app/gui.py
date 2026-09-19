@@ -27,6 +27,7 @@ from app.streaming import separate_audio
 from app.player import MIXTURE_KEY, StemPlayer
 from app.memory import MemoryMonitor
 from app.progress import estimate_remaining, format_duration
+from app.help import HelpDialog
 
 
 PLAYBACK_KEYS = (MIXTURE_KEY, "vocals", "bass", "drums", "other")
@@ -359,6 +360,9 @@ class MainWindow(QMainWindow):
         heading.setObjectName("heading")
         sidebar.addWidget(heading)
         sidebar.addWidget(QLabel("STEM STUDIO  /  LOCAL INFERENCE"))
+        self.help_button = QPushButton("Help")
+        self.help_button.clicked.connect(self.show_help)
+        sidebar.addWidget(self.help_button)
         self.controls = QWidget()
         form = QFormLayout(self.controls)
         form.setContentsMargins(0, 24, 0, 12)
@@ -575,6 +579,10 @@ class MainWindow(QMainWindow):
         self.device.currentTextChanged.connect(self.select_memory_device)
         self.backend.currentIndexChanged.connect(self.select_memory_backend)
         self.memory_monitor.start()
+
+    @Slot()
+    def show_help(self):
+        HelpDialog(self).exec()
 
     @Slot(str)
     def select_memory_device(self, device):

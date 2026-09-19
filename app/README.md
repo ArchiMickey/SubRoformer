@@ -46,6 +46,14 @@ uv run --no-sync python -m app
 ```
 
 The same source targets macOS, Windows, and Linux (with a graphical desktop).
+
+The packaged Mac app requires **macOS 15 (Sequoia) or later on Apple Silicon**,
+including in CPU mode, because of its bundled runtime dependencies.
+Use the **Help** button for keyboard shortcuts and MPS troubleshooting. If you
+see `ValueError: MPS is unavailable`, check **Apple menu → About This Mac** and
+install available macOS updates. MPS also requires supported GPU hardware and
+an MPS-enabled PyTorch build. Select **cpu** in Device to run without MPS
+(CLI: `--device cpu`); this does not lower the packaged app's macOS minimum.
 CPU is available on all three; CUDA requires a compatible NVIDIA/PyTorch setup;
 MPS requires a supported Mac. A native binary build recipe is included below;
 no prebuilt binaries are provided. Windows/Linux and full-size GPU inference require

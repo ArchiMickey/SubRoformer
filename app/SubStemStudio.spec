@@ -49,6 +49,7 @@ if sys.platform == "darwin":
         bundle_identifier="com.archimickey.subroformer",
         info_plist={
             "CFBundleShortVersionString": "0.1.0",
+            "LSMinimumSystemVersion": "15.0",
             "NSHighResolutionCapable": True,
         },
     )
