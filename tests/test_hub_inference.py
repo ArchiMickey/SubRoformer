@@ -7,9 +7,10 @@ import soundfile as sf
 import torch
 from omegaconf import OmegaConf
 
-import inference
-from checkpoint_utils import export_safetensors
-from model_utils import build_model
+from subroformer.inference import engine as inference
+from subroformer.checkpoint_utils import export_safetensors
+from subroformer.configs import get_config_path
+from subroformer.model_utils import build_model
 from tests.helpers import STEMS, tiny_config
 
 
@@ -52,7 +53,7 @@ def test_resolve_downloads_only_missing_files(tmp_path, monkeypatch, config_exis
             assert path.read_text() == "local"
 
 
-def test_default_paths_are_local_first(tmp_path, monkeypatch):
+def test_default_config_is_packaged_and_checkpoint_is_local_first(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     for filename in (inference.DEFAULT_CONFIG, inference.DEFAULT_CHECKPOINT):
         path = Path(filename)
@@ -60,8 +61,21 @@ def test_default_paths_are_local_first(tmp_path, monkeypatch):
         path.touch()
     monkeypatch.setattr(inference, "hf_hub_download", lambda **kwargs: pytest.fail("Unexpected download"))
     assert inference.resolve_pretrained_paths() == (
-        Path(inference.DEFAULT_CONFIG), Path(inference.DEFAULT_CHECKPOINT),
+        get_config_path(Path(inference.DEFAULT_CONFIG).name), Path(inference.DEFAULT_CHECKPOINT),
     )
+
+
+def test_packaged_default_config_works_offline_outside_checkout(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    checkpoint = tmp_path / "local.safetensors"
+    checkpoint.touch()
+    monkeypatch.setattr(inference, "hf_hub_download", lambda **kwargs: pytest.fail("Unexpected download"))
+    config_path, checkpoint_path = inference.resolve_pretrained_paths(
+        checkpoint_path=checkpoint, local_files_only=True,
+    )
+    assert config_path == get_config_path("sbroformer_base_4stem_silu.yaml")
+    assert inference.load_inference_config(config_path).model.dsp_backend == "dsp3"
+    assert checkpoint_path == checkpoint
 
 
 def test_directory_is_not_treated_as_missing_file(tmp_path):
@@ -125,7 +139,7 @@ def test_failed_download_does_not_report_completion(tmp_path, monkeypatch):
 def test_default_checkpoint_is_fp16():
     assert inference.DEFAULT_CONFIG == "configs/sbroformer_base_4stem_silu.yaml"
     assert inference.DEFAULT_CHECKPOINT == "checkpoints/subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors"
-    config = inference.load_config(Path(__file__).resolve().parents[1] / inference.DEFAULT_CONFIG)
+    config = inference.load_config(get_config_path(Path(inference.DEFAULT_CONFIG).name))
     assert config.model.dsp_backend == "dsp3"
     assert config.model.fusion_type == "silu"
 
@@ -154,7 +168,7 @@ def test_cli_config_and_checkpoint_are_optional(monkeypatch):
     calls = []
     monkeypatch.setattr(inference, "separate_file", lambda *args, **kwargs: calls.append((args, kwargs)) or [])
     monkeypatch.setattr(sys, "argv", [
-        "inference.py", "--input", "song.wav", "--output_dir", "stems",
+        "subroformer.inference", "--input", "song.wav", "--output_dir", "stems",
         "--revision", "commit", "--local_files_only",
     ])
     inference.main()
@@ -180,7 +194,9 @@ def test_downloaded_artifacts_run_file_inference(tmp_path, monkeypatch):
     monkeypatch.setattr(inference, "hf_hub_download", lambda **kwargs: downloads[kwargs["filename"]])
     audio_path = tmp_path / "input.wav"
     sf.write(audio_path, np.zeros((160, 2), dtype=np.float32), 1600)
-    paths = inference.separate_file(None, None, str(audio_path), str(tmp_path / "output"))
+    paths = inference.separate_file(
+        tmp_path / "missing.yaml", None, str(audio_path), str(tmp_path / "output"),
+    )
     assert [path.stem for path in paths] == STEMS
     for path in paths:
         audio, sample_rate = sf.read(path)

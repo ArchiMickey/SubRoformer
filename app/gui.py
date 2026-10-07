@@ -20,8 +20,8 @@ from PySide6.QtWidgets import (
 )
 import pyqtgraph as pg
 
-from inference import DEFAULT_CONFIG, load_audio, load_separator, resolve_device, resolve_pretrained_paths
-from coreml_inference import use_coreml
+from subroformer.inference.engine import load_audio, load_separator, resolve_device, resolve_pretrained_paths
+from subroformer.inference.coreml import use_coreml
 from app.coreml_worker import load_coreml_process
 from app.streaming import separate_audio
 from app.player import MIXTURE_KEY, StemPlayer
@@ -138,10 +138,9 @@ class InferenceWorker(QThread):
         if coreml and device not in {"cpu", "mps"}:
             raise ValueError("Core ML DSP requires the cpu or mps device")
         self.status.emit("Resolving model artifacts (missing files may download)…")
-        default_config = Path(__file__).resolve().parent.parent / DEFAULT_CONFIG
         if not coreml:
             config_path, checkpoint_path = resolve_pretrained_paths(
-                options["config"] or str(default_config), options["checkpoint"] or None,
+                options["config"] or None, options["checkpoint"] or None,
                 local_files_only=options["offline"],
                 download_progress=self.artifact_progress.emit,
             )

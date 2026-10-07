@@ -1,11 +1,11 @@
 import pytest
 import torch
 
-from dsp.inference_optimized import InferenceSubbandFilter
-from dsp2 import SubbandFilter
-from inference_optimized import optimize_for_inference
+from subroformer.frontend.dsp.inference_optimized import InferenceSubbandFilter
+from subroformer.frontend.dsp2 import SubbandFilter
+from subroformer.inference.optimized import optimize_for_inference
 from tests.helpers import tiny_config
-from training_utils import build_model
+from subroformer.training.training_utils import build_model
 
 
 @pytest.mark.parametrize("num_stems", [1, 4])

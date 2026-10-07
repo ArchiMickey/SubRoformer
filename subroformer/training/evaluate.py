@@ -9,10 +9,10 @@ import numpy as np
 import torch
 from accelerate import Accelerator
 from accelerate.utils import gather_object
-from checkpoint_utils import extract_model_state, load_checkpoint
-from inference import load_audio, normalize_model_output, separate_overlap_add
+from ..checkpoint_utils import extract_model_state, load_checkpoint
+from ..inference.engine import load_audio, normalize_model_output, separate_overlap_add
 
-from training_utils import build_model, load_config, museval_sdr
+from .training_utils import build_model, load_config, museval_sdr
 
 
 

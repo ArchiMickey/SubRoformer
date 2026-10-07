@@ -4,25 +4,24 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-import sys
 
 import librosa
 import numpy as np
 import soundfile as sf
 import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from checkpoint_utils import load_model_checkpoint
-from inference import DEFAULT_CHECKPOINT, DEFAULT_CONFIG, separate_audio
-from model_utils import build_model, load_config
+from subroformer.checkpoint_utils import load_model_checkpoint
+from subroformer.inference.engine import DEFAULT_CHECKPOINT, DEFAULT_CONFIG, separate_audio
+from subroformer.configs import get_config_path
+from subroformer.model_utils import build_model, load_config
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path, default=Path(DEFAULT_CHECKPOINT))
-    parser.add_argument("--config", type=Path, default=Path(DEFAULT_CONFIG))
+    parser.add_argument("--config", type=Path, default=get_config_path(Path(DEFAULT_CONFIG).name))
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--tracks", type=int, default=50)
     parser.add_argument("--precisions", nargs="+", choices=["fp32", "fp16", "bf16"], default=["fp32", "fp16", "bf16"])
@@ -73,9 +72,9 @@ def main():
                 result = {"track": path.parent.name, "seconds": duration, "precision": precision, "stems": metrics}
                 results.append(result)
                 print(json.dumps(result), flush=True)
-    source_paths = [Path("model.py"), Path("inference.py")]
+    source_paths = [Path("subroformer/model.py"), Path("subroformer/inference/engine.py")]
     for backend in models:
-        source_paths.extend(path for path in Path(backend).rglob("*")
+        source_paths.extend(path for path in Path("subroformer/frontend", backend).rglob("*")
                             if path.suffix in {".py", ".cpp", ".metal"})
     report = {
         "device": args.device, "torch": torch.__version__,

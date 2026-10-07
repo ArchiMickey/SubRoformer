@@ -5,7 +5,7 @@ import multiprocessing
 
 import torch
 
-from coreml_inference import load_local_coreml_separator, resolve_coreml_artifact
+from subroformer.inference.coreml import load_local_coreml_separator, resolve_coreml_artifact
 
 
 _separator = None

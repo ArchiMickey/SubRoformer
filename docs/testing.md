@@ -8,9 +8,9 @@ repository root. The broader evaluation/test imports require `ffmpeg` and
 
 ```bash
 uv run pytest
-uv run torchrun --standalone --nproc-per-node=2 tests/ddp_data_smoke.py
-RANDOM_MIXING=0 uv run torchrun --standalone --nproc-per-node=2 tests/ddp_data_smoke.py
-uv run torchrun --standalone --nproc-per-node=2 tests/ddp_evaluate_smoke.py
+uv run torchrun --standalone --nproc-per-node=2 --module tests.ddp_data_smoke
+RANDOM_MIXING=0 uv run torchrun --standalone --nproc-per-node=2 --module tests.ddp_data_smoke
+uv run torchrun --standalone --nproc-per-node=2 --module tests.ddp_evaluate_smoke
 ```
 
 See [preparation validation](validation.md) for the checks performed.

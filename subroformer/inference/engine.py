@@ -14,8 +14,9 @@ from scipy.signal import get_window
 from huggingface_hub import hf_hub_download
 from tqdm.auto import tqdm
 
-from checkpoint_utils import load_model_checkpoint
-from model_utils import build_model, load_config
+from ..checkpoint_utils import load_model_checkpoint
+from ..configs import get_config_path
+from ..model_utils import build_model, load_config
 
 
 DEFAULT_REPO_ID = "archimickey/SubRoformer"
@@ -67,6 +68,8 @@ def resolve_amp_dtype(device: torch.device, precision: str = "auto") -> torch.dt
 
 
 def _resolve_pretrained_file(requested, filename, download_progress=None, **download_options) -> Path:
+    if requested is None and filename == DEFAULT_CONFIG:
+        return get_config_path(Path(filename).name)
     local_path = Path(requested if requested is not None else filename).expanduser()
     if local_path.is_file():
         return local_path
@@ -106,7 +109,7 @@ def resolve_pretrained_paths(
     local_files_only: bool = False,
     download_progress=None,
 ) -> tuple[Path, Path]:
-    """Prefer local files; fetch missing Base artifacts into the HF cache.
+    """Use the packaged default config and prefer local checkpoint files.
 
     Missing explicit paths also fall back to the canonical Base filenames.
     Existing files are never replaced, and invalid local files fail at load time.
@@ -229,7 +232,7 @@ def load_separator(
     backend: str = "torch",
 ):
     """Load once for serving; return an eval-mode model and its resolved config."""
-    from coreml_inference import load_coreml_separator, use_coreml
+    from .coreml import load_coreml_separator, use_coreml
 
     if use_coreml(backend, device, config_path, checkpoint_path):
         return load_coreml_separator(
@@ -312,7 +315,7 @@ def separate_file(
     local_files_only: bool = False,
     backend: str = "torch",
 ) -> list[Path]:
-    from coreml_inference import load_coreml_separator, use_coreml
+    from .coreml import load_coreml_separator, use_coreml
 
     coreml = use_coreml(backend, device, config_path, checkpoint_path)
     if coreml:
@@ -390,7 +393,7 @@ def separate_file(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Separate an audio file without reference stems")
-    parser.add_argument("--config", help="Local config; missing files fall back to the HF Base config; waveform inference defaults to dsp3")
+    parser.add_argument("--config", help="Local config; defaults to the packaged YAML; missing explicit files fall back to the HF Base config; waveform inference defaults to dsp3")
     parser.add_argument("--checkpoint", help="Local weights; missing files fall back to the HF Base checkpoint")
     parser.add_argument("--repo_id", default=DEFAULT_REPO_ID)
     parser.add_argument("--revision", help="HF branch, tag, or commit")

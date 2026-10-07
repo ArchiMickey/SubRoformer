@@ -10,7 +10,7 @@ desktop app and tools for SubRoformer's training, evaluation, and inference.
 
 The perceptual-checkpoint config and waveform inference now default to DSP3,
 with native CPU/CUDA/MPS modulation and the existing MPS FFT cache. Explicit
-DSP/DSP2 configs remain supported. See [DSP3 validation](docs/dsp3.md).
+DSP/DSP2 configs remain supported. See [DSP3 validation](subroformer/frontend/dsp3/README.md).
 
 ## Contributions
 
@@ -51,7 +51,7 @@ Both checkpoints are available on
 MUSDB18-HQ full-test `museval` SDR in dB (50 songs). Each stem is the median of
 per-song median SDRs; Mean averages the four stem medians. For these extra-data
 checkpoint results, see the
-[evaluation protocol](docs/evaluation.md#published-test-results).
+[evaluation protocol](subroformer/training/README.md#published-test-results).
 They are not separate benchmarks of the FP16 or Core ML exports.
 
 The perceptual-finetuned checkpoint sacrifices some SDR (**0.1913 dB** mean)
@@ -66,12 +66,16 @@ to the 1.4M Base and uses the matching **SiLU** config, not the original
 | --- | --- |
 | App installation, usage, and native builds | [app/README.md](app/README.md) |
 | Python/source installation | [docs/installation.md](docs/installation.md) |
-| Training and dataset preparation | [docs/training.md](docs/training.md) |
-| Evaluation and SDR protocol | [docs/evaluation.md](docs/evaluation.md) |
-| CLI and Python inference | [docs/inference.md](docs/inference.md) |
+| Package modules and imports | [subroformer/README.md](subroformer/README.md) |
+| Model configs and inheritance | [subroformer/configs/README.md](subroformer/configs/README.md) |
+| Training and dataset preparation | [Training guide](subroformer/training/README.md) |
+| Evaluation and SDR protocol | [Evaluation guide](subroformer/training/README.md#evaluation) |
+| CLI and Python inference | [Inference guide](subroformer/inference/README.md) |
+| DSP backends and defaults | [Frontend guide](subroformer/frontend/README.md) |
 | Checkpoint downloads and provenance | [docs/checkpoints.md](docs/checkpoints.md) |
-| Core ML setup and export | [docs/coreml.md](docs/coreml.md) |
+| Core ML setup and export | [Core ML guide](subroformer/inference/README.md#core-ml-inference) |
 | Tests and validation | [docs/testing.md](docs/testing.md) |
+| Historical inference optimization experiments | [docs/inference_optimization.md](docs/inference_optimization.md) |
 
 ## Acknowledgments
 

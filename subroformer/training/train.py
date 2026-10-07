@@ -14,9 +14,9 @@ from accelerate.utils import InitProcessGroupKwargs
 from omegaconf import OmegaConf
 from torch.optim import AdamW
 
-from dataset import prepare_data
-from evaluate import evaluate_subset
-from training_utils import (
+from .dataset import prepare_data
+from .evaluate import evaluate_subset
+from .training_utils import (
     ModelEMA,
     build_model,
     load_config,

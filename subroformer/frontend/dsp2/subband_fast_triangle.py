@@ -5,10 +5,10 @@ import math
 import torch
 from torch import Tensor
 
-from dsp.analytic import analytic_to_real, real_to_analytic
-from dsp.convolve import polyphase_fftconvolve
-from dsp.subband_fast_triangle import SubbandFilter as OriginalSubbandFilter
-from dsp.upsample import polyphase_fftupsample
+from ..dsp.analytic import analytic_to_real, real_to_analytic
+from ..dsp.convolve import polyphase_fftconvolve
+from ..dsp.subband_fast_triangle import SubbandFilter as OriginalSubbandFilter
+from ..dsp.upsample import polyphase_fftupsample
 
 from .utils import shift_frequency
 

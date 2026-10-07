@@ -11,9 +11,9 @@ from einops import rearrange
 from torch import LongTensor, Tensor
 from torch.utils.checkpoint import checkpoint
 
-from dsp import SubbandFilter, mel_linear_banks_triangle
-from dsp.inference_optimized import InferenceSubbandFilter
-from dsp.overlap_add import overlap_add
+from .frontend.dsp import SubbandFilter, mel_linear_banks_triangle
+from .frontend.dsp.inference_optimized import InferenceSubbandFilter
+from .frontend.dsp.overlap_add import overlap_add
 
 try:
     from flash_attn import flash_attn_func
@@ -1283,11 +1283,11 @@ class SBRoformer(nn.Module):
         if self.frontend_type == "waveform_subband":
             filter_class = SubbandFilter
             if self.dsp_backend == "dsp2":
-                from dsp2 import SubbandFilter as FixedPointSubbandFilter
+                from .frontend.dsp2 import SubbandFilter as FixedPointSubbandFilter
 
                 filter_class = FixedPointSubbandFilter
             elif self.dsp_backend == "dsp3":
-                from dsp3 import SubbandFilter as FusedSubbandFilter
+                from .frontend.dsp3 import SubbandFilter as FusedSubbandFilter
 
                 filter_class = FusedSubbandFilter
             self.sb_filter = filter_class(
@@ -1301,11 +1301,11 @@ class SBRoformer(nn.Module):
             if self.dsp_backend == "dsp":
                 self.sb_filter = InferenceSubbandFilter(self.sb_filter, level=3)
             elif self.dsp_backend == "dsp2":
-                from dsp2.inference_optimized import InferenceSubbandFilter as FixedPointInferenceSubbandFilter
+                from .frontend.dsp2.inference_optimized import InferenceSubbandFilter as FixedPointInferenceSubbandFilter
 
                 self.sb_filter = FixedPointInferenceSubbandFilter(self.sb_filter)
             else:
-                from dsp3.inference_optimized import InferenceSubbandFilter as FusedInferenceSubbandFilter
+                from .frontend.dsp3.inference_optimized import InferenceSubbandFilter as FusedInferenceSubbandFilter
 
                 self.sb_filter = FusedInferenceSubbandFilter(self.sb_filter)
         else:

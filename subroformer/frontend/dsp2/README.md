@@ -1,4 +1,8 @@
+[← Frontend guide](../README.md)
+
 # Optional fixed-point DSP backend
+
+Run shell examples from the repository root.
 
 Set this field in your existing YAML config to use `dsp2` for both subband
 analysis and synthesis:
@@ -8,7 +12,7 @@ model:
   dsp_backend: dsp2
 ```
 
-The default perceptual-checkpoint config now selects [DSP3](dsp3.md).
+The default perceptual-checkpoint config now selects [DSP3](../dsp3/README.md).
 `sbroformer_base_4stem_silu_dsp2.yaml` explicitly retains `dsp2`.
 Training and evaluation use `dsp`, including its
 level-3 inference filter caching, when the config omits `dsp_backend`.
@@ -74,9 +78,9 @@ the compiler toolchain.
 ## Reproducible speed and parity check
 
 ```bash
-python benchmarks/benchmark_dsp2_kernels.py --device cpu --threads 8 --require-speedup --output /tmp/dsp2-cpu.json
-python benchmarks/benchmark_dsp2_kernels.py --device cuda --threads 1 --require-speedup --output /tmp/dsp2-cuda.json
-python benchmarks/benchmark_dsp2_kernels.py --device mps --threads 1 --require-speedup --output /tmp/dsp2-mps.json
+python -m benchmarks.benchmark_dsp2_kernels --device cpu --threads 8 --require-speedup --output /tmp/dsp2-cpu.json
+python -m benchmarks.benchmark_dsp2_kernels --device cuda --threads 1 --require-speedup --output /tmp/dsp2-cuda.json
+python -m benchmarks.benchmark_dsp2_kernels --device mps --threads 1 --require-speedup --output /tmp/dsp2-mps.json
 ```
 
 The benchmark compares public dispatch with the retained original DSP2 path,
@@ -130,8 +134,8 @@ no re-export or download is required for this DSP change. Explicit
 Run full-model benchmarks against the retained **uncached DSP2 reference**:
 
 ```bash
-python benchmarks/benchmark_dsp2_mps_model.py --backend torch --audio song.wav --require-speedup --output /tmp/dsp2-mps-torch.json
-python benchmarks/benchmark_dsp2_mps_model.py --backend coreml --audio song.wav --require-speedup --output /tmp/dsp2-mps-coreml.json
+python -m benchmarks.benchmark_dsp2_mps_model --backend torch --audio song.wav --require-speedup --output /tmp/dsp2-mps-torch.json
+python -m benchmarks.benchmark_dsp2_mps_model --backend coreml --audio song.wav --require-speedup --output /tmp/dsp2-mps-coreml.json
 ```
 
 These use local checkpoints/artifacts, require exact output equality for noise,

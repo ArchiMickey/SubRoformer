@@ -7,7 +7,6 @@ import json
 import platform
 import statistics
 import subprocess
-import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,12 +14,11 @@ from pathlib import Path
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
-from checkpoint_utils import load_model_checkpoint
+from subroformer.checkpoint_utils import load_model_checkpoint
 from benchmarks.reference_model import build_reference_model
-from inference_optimized import OPTIMIZATION_STEPS, optimize_for_inference
-from model_utils import build_model, load_config
+from subroformer.inference.optimized import OPTIMIZATION_STEPS, optimize_for_inference
+from subroformer.model_utils import build_model, load_config
 
 
 def file_hash(path):
@@ -29,8 +27,8 @@ def file_hash(path):
 
 
 def source_hashes():
-    paths = [ROOT / name for name in ("model.py", "inference.py", "model_utils.py")]
-    paths.extend(sorted((ROOT / "dsp").glob("*.py")))
+    paths = [ROOT / name for name in ("subroformer/model.py", "subroformer/inference/engine.py", "subroformer/model_utils.py")]
+    paths.extend(sorted((ROOT / "subroformer/frontend/dsp").glob("*.py")))
     return {str(path.relative_to(ROOT)): file_hash(path) for path in paths}
 
 
@@ -166,7 +164,7 @@ def run_device(args, config, device):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--level", type=int, required=True, choices=OPTIMIZATION_STEPS)
-    parser.add_argument("--config", type=Path, default=ROOT / "configs/sbroformer_base_4stem.yaml")
+    parser.add_argument("--config", type=Path, default=ROOT / "subroformer/configs/sbroformer_base_4stem.yaml")
     parser.add_argument("--checkpoint", type=Path, default=ROOT / "checkpoints/subroformer_base_4stem_1400000_ema.safetensors")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--warmup", type=int, default=2)
@@ -204,7 +202,7 @@ def main():
         "checkpoint": str(args.checkpoint.resolve()),
         "checkpoint_sha256": file_hash(args.checkpoint),
         "original_source_sha256": source_hashes(),
-        "optimized_source_sha256": file_hash(ROOT / "inference_optimized.py"),
+        "optimized_source_sha256": file_hash(ROOT / "subroformer/inference/optimized.py"),
         "reference_builder_sha256": file_hash(ROOT / "benchmarks/reference_model.py"),
         "benchmark_source_sha256": file_hash(Path(__file__)),
         "devices": [],

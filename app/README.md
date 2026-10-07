@@ -339,7 +339,7 @@ GPU-accelerated DSP, or CPU for CPU DSP. Auto selects MPS when available.
 DSP defaults to DSP3, including the optimized Metal modulation kernel and
 inference filter FFT cache on MPS. The bundled app includes the Metal shader;
 no separate compiler installation, model re-export, or new weights are needed.
-See [DSP3 validation and benchmarks](../docs/dsp3.md).
+See [DSP3 validation and benchmarks](../subroformer/frontend/dsp3/README.md).
 MPS DSP requires PyTorch 2.14+; Core ML requires macOS 15+ and blank custom
 config/checkpoint fields. Select PyTorch manually for custom models.
 Core ML inference runs in a dedicated spawned process so its native prediction
@@ -348,4 +348,4 @@ is closed after completion, cancellation, or failure. Checkpoints, DSP precision
 and playback buffering are unchanged. The Core ML memory indicator reports
 combined app-and-worker resident RAM, rather than GUI-only Metal allocations;
 system RAM usage covers all processes.
-See [Core ML setup, limitations, and export](../docs/coreml.md).
+See [Core ML setup, limitations, and export](../subroformer/inference/README.md#core-ml-inference).

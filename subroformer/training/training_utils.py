@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_utils import build_model, load_config
+from ..model_utils import build_model, load_config
 
 
 

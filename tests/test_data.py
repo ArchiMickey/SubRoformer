@@ -7,7 +7,7 @@ import torch
 from omegaconf import OmegaConf
 from torch.utils.data import RandomSampler
 
-from dataset import RandomMixingSampler, prepare_data
+from subroformer.training.dataset import RandomMixingSampler, prepare_data
 from tests.helpers import make_dataset, tiny_config
 
 

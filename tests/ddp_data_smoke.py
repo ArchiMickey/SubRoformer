@@ -2,18 +2,16 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import torch
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 
-from dataset import RandomMixingSampler, prepare_data
+from subroformer.training.dataset import RandomMixingSampler, prepare_data
 from tests.helpers import make_dataset, tiny_config
 
 

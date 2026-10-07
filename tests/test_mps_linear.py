@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from model import MPSCompatibleLinear
+from subroformer.model import MPSCompatibleLinear
 
 
 @pytest.mark.parametrize("device", ["cpu", "mps"])

@@ -12,7 +12,7 @@ from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from tqdm.auto import tqdm
 
-from model_utils import build_model, load_config
+from ..model_utils import build_model, load_config
 
 
 COREML_DIRECTORY = "coreml/base-4stem-perceptual-200k-fp16-v1"

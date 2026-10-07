@@ -6,7 +6,7 @@ import torch
 from einops import rearrange
 from scipy.signal import get_window
 
-from inference import normalize_model_output
+from subroformer.inference.engine import normalize_model_output
 
 
 def separate_overlap_add(model, audio, segment_samples, hop_length, batch_size, amp_dtype=None):

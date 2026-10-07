@@ -2,8 +2,8 @@ import pytest
 import torch
 
 from benchmarks.reference_model import build_reference_model
-from inference_optimized import OPTIMIZATION_STEPS, optimize_for_inference
-from model_utils import build_model
+from subroformer.inference.optimized import OPTIMIZATION_STEPS, optimize_for_inference
+from subroformer.model_utils import build_model
 from tests.helpers import tiny_config
 
 

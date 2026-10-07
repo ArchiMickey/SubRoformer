@@ -6,7 +6,6 @@ import json
 import platform
 import statistics
 import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -15,12 +14,11 @@ import torch
 from safetensors.torch import load_file
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
-from coreml_inference import CoreMLSeparator
-from export_coreml import validate_waveform
-from inference import load_audio, load_separator, resolve_pretrained_paths
-from model_utils import load_config
+from subroformer.inference.coreml import CoreMLSeparator
+from subroformer.inference.export_coreml import validate_waveform
+from subroformer.inference.engine import load_audio, load_separator, resolve_pretrained_paths
+from subroformer.model_utils import load_config
 
 
 def main():
@@ -58,7 +56,7 @@ def main():
               "checkpoint_sha256": hashlib.sha256(checkpoint_path.read_bytes()).hexdigest(),
               "validation_audio_sha256": hashlib.sha256(args.validation_audio.read_bytes()).hexdigest(),
               "source_sha256": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-                                for name in ("coreml_inference.py", "model.py", "benchmarks/benchmark_coreml_dsp.py")},
+                                for name in ("subroformer/inference/coreml.py", "subroformer/model.py", "benchmarks/benchmark_coreml_dsp.py")},
               "artifact_sha256": {str(path.relative_to(args.artifact)):
                   hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in sorted(args.artifact.rglob("*")) if path.is_file()},

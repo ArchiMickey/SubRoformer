@@ -6,8 +6,8 @@ import soundfile as sf
 import torch
 from omegaconf import OmegaConf
 
-from inference import load_separator, resolve_amp_dtype, resolve_device, separate_audio, separate_file
-from model_utils import build_model
+from subroformer.inference.engine import load_separator, resolve_amp_dtype, resolve_device, separate_audio, separate_file
+from subroformer.model_utils import build_model
 from tests.helpers import tiny_config
 
 

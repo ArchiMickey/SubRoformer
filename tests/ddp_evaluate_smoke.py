@@ -1,16 +1,14 @@
 """Accelerate smoke test for song sharding and global SDR aggregation."""
 
 import os
-import sys
 from pathlib import Path
 
 import torch
 from accelerate import Accelerator
 from omegaconf import OmegaConf
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import evaluate
+from subroformer.training import evaluate
 
 
 def fake_evaluate_songs(

@@ -1,5 +1,6 @@
 include README.md
-recursive-include configs *.yaml
+recursive-include subroformer/configs *.yaml
+recursive-include subroformer *.md
 recursive-include docs *.md
 recursive-include tests *.py
 include .gitignore

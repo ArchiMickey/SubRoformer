@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from dsp3.cuda_kernel import is_available, shift_frequency_cuda
-from dsp3 import utils
+from subroformer.frontend.dsp3.cuda_kernel import is_available, shift_frequency_cuda
+from subroformer.frontend.dsp3 import utils
 
 
 pytestmark = pytest.mark.skipif(

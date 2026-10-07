@@ -1,6 +1,6 @@
 """Retain the model's FFT cache on MPS without reverting DSP2 modulation."""
 
-from dsp.inference_optimized import InferenceSubbandFilter as CachedSubbandFilter
+from ..dsp.inference_optimized import InferenceSubbandFilter as CachedSubbandFilter
 
 from . import subband_fast_triangle
 from .subband_fast_triangle import SubbandFilter

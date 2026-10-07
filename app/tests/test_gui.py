@@ -20,7 +20,7 @@ import pyqtgraph as pg
 
 from app.gui import InferenceWorker, MainWindow, Spectrogram, STYLE, MIXTURE_KEY
 from app.memory import MemoryUsage
-from model_utils import build_model
+from subroformer.model_utils import build_model
 from tests.helpers import tiny_config
 
 
@@ -560,7 +560,7 @@ def test_memory_display_tracks_coreml_backend(application):
 @pytest.mark.parametrize("config_exists,checkpoint_exists", [(True, True), (True, False), (False, True), (False, False)])
 @pytest.mark.parametrize("dtype", [torch.float16, torch.float32])
 def test_worker_real_inference_and_export(application, tmp_path, monkeypatch, config_exists, checkpoint_exists, dtype):
-    from inference import DEFAULT_CONFIG, DEFAULT_CHECKPOINT, load_separator
+    from subroformer.inference.engine import DEFAULT_CONFIG, DEFAULT_CHECKPOINT, load_separator
     from tests.legacy_overlap_add import separate_overlap_add as legacy_overlap_add
 
     config = tiny_config()
@@ -582,7 +582,7 @@ def test_worker_real_inference_and_export(application, tmp_path, monkeypatch, co
             bar.update(size - size // 2)
         return str(path)
 
-    monkeypatch.setattr("inference.hf_hub_download", download)
+    monkeypatch.setattr("subroformer.inference.engine.hf_hub_download", download)
     sf.write(source, np.random.default_rng(4).normal(0, .01, (1500, 2)), 1600)
     worker = InferenceWorker({
         "input": str(source), "output": str(tmp_path / "outputs"),

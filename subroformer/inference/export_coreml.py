@@ -11,8 +11,8 @@ import torch
 from omegaconf import OmegaConf
 from safetensors.torch import save_file
 
-from inference import DEFAULT_REPO_ID, load_audio, load_separator, resolve_pretrained_paths
-from coreml_inference import COREML_DIRECTORY, CoreMLSeparator
+from .engine import DEFAULT_REPO_ID, load_audio, load_separator, resolve_pretrained_paths
+from .coreml import COREML_DIRECTORY, CoreMLSeparator
 
 
 class MaskNetwork(torch.nn.Module):

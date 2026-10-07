@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from model import (
+from subroformer.model import (
     AdditiveFusion,
     BandRMSNorm,
     DEFAULT_GLOBAL_BS_FREQS_PER_BAND,
@@ -21,7 +21,7 @@ from model import (
     TransformerBlock,
 )
 from tests.helpers import tiny_config
-from training_utils import build_model, load_config
+from subroformer.training.training_utils import build_model, load_config
 
 
 @pytest.mark.parametrize("dtype", [torch.float16, torch.bfloat16])
@@ -74,7 +74,7 @@ def test_sbroformer_joint_four_stem_forward_backward(fusion_type):
 
 
 def test_sbroformer_four_stem_config_contract():
-    config_path = Path(__file__).parents[1] / "configs" / "sbroformer_base_4stem.yaml"
+    config_path = Path(__file__).parents[1] / "subroformer/configs" / "sbroformer_base_4stem.yaml"
     config = load_config(str(config_path))
 
     assert config.model.num_stems == 4

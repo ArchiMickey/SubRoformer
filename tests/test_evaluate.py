@@ -5,8 +5,8 @@ import soundfile as sf
 import torch
 from omegaconf import OmegaConf
 
-import evaluate
-from evaluate import (
+from subroformer.training import evaluate
+from subroformer.training.evaluate import (
     evaluate_songs,
     evaluate_songs_distributed,
     extract_model_state,
@@ -16,8 +16,8 @@ from evaluate import (
     separate_overlap_add,
     summarize_evaluation_rows,
 )
-from train import build_eval_metrics
-from training_utils import museval_sdr
+from subroformer.training.train import build_eval_metrics
+from subroformer.training.training_utils import museval_sdr
 
 
 def test_subset_selection_matches_mini_source_separation_spacing(tmp_path: Path):
