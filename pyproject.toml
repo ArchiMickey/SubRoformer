@@ -30,25 +30,13 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=8.3"]
 
-[tool.setuptools]
-py-modules = [
-  "checkpoint_utils",
-  "coreml_inference",
-  "dataset",
-  "evaluate",
-  "inference",
-  "model",
-  "model_utils",
-  "train",
-  "training_utils",
-]
-
 [tool.setuptools.packages.find]
-include = ["dsp*"]
+include = ["subroformer", "subroformer.*"]
 
 [tool.setuptools.package-data]
-dsp2 = ["csrc/*.cpp", "csrc/*.metal"]
-dsp3 = ["csrc/*.cpp", "csrc/*.metal", "LICENSE", "source_manifest.json"]
+"subroformer.configs" = ["*.yaml"]
+"subroformer.frontend.dsp2" = ["csrc/*.cpp", "csrc/*.metal"]
+"subroformer.frontend.dsp3" = ["csrc/*.cpp", "csrc/*.metal", "LICENSE", "source_manifest.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -5,7 +5,7 @@ from pathlib import Path
 import torch.nn as nn
 from omegaconf import OmegaConf
 
-from model import SBRoformer
+from .model import SBRoformer
 
 
 def load_config(path: str):

@@ -4,13 +4,13 @@ from unittest.mock import patch
 import pytest
 import torch
 
-from dsp import SubbandFilter as OriginalSubbandFilter
-from dsp2 import SubbandFilter as ReferenceSubbandFilter
-from dsp2.utils import _shift_frequency_reference as reference_shift
-from dsp3 import SubbandFilter, mel_linear_banks_triangle, shift_frequency
-from dsp3.utils import _shift_frequency_reference
-from model import SBRoformer
-from inference_optimized import optimize_for_inference
+from subroformer.frontend.dsp import SubbandFilter as OriginalSubbandFilter
+from subroformer.frontend.dsp2 import SubbandFilter as ReferenceSubbandFilter
+from subroformer.frontend.dsp2.utils import _shift_frequency_reference as reference_shift
+from subroformer.frontend.dsp3 import SubbandFilter, mel_linear_banks_triangle, shift_frequency
+from subroformer.frontend.dsp3.utils import _shift_frequency_reference
+from subroformer.model import SBRoformer
+from subroformer.inference.optimized import optimize_for_inference
 
 
 @pytest.fixture(params=["cpu", "cuda", "mps"])
@@ -24,7 +24,7 @@ def device(request):
 
 @pytest.fixture
 def native_device(device):
-    kernel = importlib.import_module(f"dsp3.{device.type}_kernel")
+    kernel = importlib.import_module(f"subroformer.frontend.dsp3.{device.type}_kernel")
     if not kernel.is_available():
         pytest.skip(f"The native {device.type} kernel is unavailable")
     return device
@@ -62,7 +62,7 @@ def test_native_modulation_matches_dsp2_outputs_and_gradients(native_device, dty
         signal = signal[..., :0]
     signal.requires_grad_(True)
     expected = reference_shift(signal, frequencies, 48000, stride)
-    with patch("dsp3.utils._shift_frequency_reference", side_effect=AssertionError("Unexpected fallback")):
+    with patch("subroformer.frontend.dsp3.utils._shift_frequency_reference", side_effect=AssertionError("Unexpected fallback")):
         actual = shift_frequency(signal, frequencies, 48000, stride)
     tolerance = 1e-6 if dtype == torch.complex64 else 1e-12
     torch.testing.assert_close(actual, expected, rtol=tolerance, atol=tolerance)
@@ -85,7 +85,7 @@ def test_native_modulation_supports_second_derivatives(native_device):
 
 
 def test_missing_native_kernel_falls_back_to_fixed_point_reference(monkeypatch, device):
-    kernel = importlib.import_module(f"dsp3.{device.type}_kernel")
+    kernel = importlib.import_module(f"subroformer.frontend.dsp3.{device.type}_kernel")
     monkeypatch.setattr(kernel, "is_available", lambda: False)
     frequencies = torch.tensor([997.125, -23980.0], device=device)
     signal = torch.randn(2, 2, 257, dtype=torch.complex64, device=device, requires_grad=True)
@@ -100,7 +100,7 @@ def test_missing_native_kernel_falls_back_to_fixed_point_reference(monkeypatch, 
 def test_real_and_broadcast_inputs_use_reference(device, dtype):
     frequencies = torch.tensor([997.125, -23980.0], device=device)
     signal = torch.randn(2, 1, 257, dtype=dtype, device=device, requires_grad=True)
-    with patch("dsp3.utils._shift_frequency_reference", wraps=_shift_frequency_reference) as fallback:
+    with patch("subroformer.frontend.dsp3.utils._shift_frequency_reference", wraps=_shift_frequency_reference) as fallback:
         actual = shift_frequency(signal, frequencies, 48000, 60)
     fallback.assert_called_once()
     expected = reference_shift(signal, frequencies, 48000, 60)

@@ -6,12 +6,12 @@ import torch
 import soundfile as sf
 from omegaconf import OmegaConf
 
-import coreml_inference
-import inference
-from model_utils import build_model
-from dsp2 import SubbandFilter
-from dsp3 import SubbandFilter as DSP3SubbandFilter
-from dsp.inference_optimized import InferenceSubbandFilter
+from subroformer.inference import coreml as coreml_inference
+from subroformer.inference import engine as inference
+from subroformer.model_utils import build_model
+from subroformer.frontend.dsp2 import SubbandFilter
+from subroformer.frontend.dsp3 import SubbandFilter as DSP3SubbandFilter
+from subroformer.frontend.dsp.inference_optimized import InferenceSubbandFilter
 from tests.helpers import tiny_config
 
 
@@ -30,7 +30,7 @@ def test_coreml_defaults_to_dsp3_without_overriding_explicit_backend(backend, ex
 
 
 def test_export_preserves_input_block_and_norm_precision():
-    from export_coreml import use_fp16_for_op
+    from subroformer.inference.export_coreml import use_fp16_for_op
 
     for module in ("RMSNorm", "RMSNorm2d", "GRN", "TimeMixBlock"):
         assert not use_fp16_for_op(SimpleNamespace(scopes={"module": [module]}))
@@ -62,13 +62,13 @@ def test_snapshot_reports_bytes_not_file_counts_or_transfer_bytes(tmp_path, monk
 
 @pytest.mark.parametrize("module,expected", [("RMSNorm", False), ("RMSNorm2d", False), ("GRN", False), ("Linear", True), ("Conv2d", True)])
 def test_export_preserves_normalization_precision(module, expected):
-    from export_coreml import use_fp16_for_op
+    from subroformer.inference.export_coreml import use_fp16_for_op
 
     assert use_fp16_for_op(SimpleNamespace(scopes={"module_type": ["MaskNetwork", module]})) is expected
 
 
 def test_export_waveform_validation():
-    from export_coreml import validate_waveform
+    from subroformer.inference.export_coreml import validate_waveform
 
     relative, absolute = validate_waveform(np.zeros(16), np.full(16, 2e-7))
     assert absolute == pytest.approx(2e-7)

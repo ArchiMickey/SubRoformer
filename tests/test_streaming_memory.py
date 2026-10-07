@@ -4,8 +4,8 @@ import soundfile as sf
 import torch
 from omegaconf import OmegaConf
 
-import inference
-from model_utils import build_model
+from subroformer.inference import engine as inference
+from subroformer.model_utils import build_model
 from tests.helpers import tiny_config
 from tests.legacy_overlap_add import separate_overlap_add as legacy_overlap_add
 

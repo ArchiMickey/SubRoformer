@@ -1,8 +1,12 @@
+[← Frontend guide](../README.md)
+
 # DSP3 default and checkpoint compatibility
+
+Run shell examples from the repository root.
 
 The perceptual-checkpoint config, PyTorch waveform inference, and Core ML DSP
 runtime now default to `dsp3`. Explicit `dsp` and `dsp2` selections are preserved;
-`configs/sbroformer_base_4stem_silu_dsp2.yaml` remains the DSP2 comparison config.
+`subroformer/configs/sbroformer_base_4stem_silu_dsp2.yaml` remains the DSP2 comparison config.
 Training/evaluation configs without a backend retain their legacy `dsp` default.
 Global-STFT frontends are unchanged and reject explicit DSP2/DSP3 selections.
 
@@ -14,10 +18,12 @@ model:
 ## What changed
 
 Imported the local `../SBRoformer/dsp3` snapshot, with source SHA256 hashes in
-`dsp3/source_manifest.json`. The source was untracked, so these hashes identify
+`subroformer/frontend/dsp3/source_manifest.json`. The source was untracked, so these hashes identify
 the snapshot rather than its repository HEAD. FIR design, triangular banks,
 FFT operations, decimation, and checkpoint tensor names remain unchanged.
-The imported MIT license is retained in `dsp3/LICENSE`.
+The imported MIT license is retained in `subroformer/frontend/dsp3/LICENSE`.
+The manifest and historical benchmark JSONs retain their original `dsp3/...`
+paths and hashes; the package move does not rewrite that provenance.
 
 **This DSP3 snapshot already matches this repository's optimized DSP2 math.**
 Wrapped 32-bit fixed-point modulation and native kernels had already been
@@ -57,7 +63,7 @@ An additional CPU FP32 check on the first two-second excerpt is also
 bit-identical for all four stems: `benchmarks/results/dsp3-checkpoint-cpu.json`.
 
 ```bash
-OMP_NUM_THREADS=4 .venv/bin/python benchmarks/validate_dsp3_checkpoint.py \
+OMP_NUM_THREADS=4 .venv/bin/python -m benchmarks.validate_dsp3_checkpoint \
   --dataset /datasets/musdb18hq/test \
   --output benchmarks/results/dsp3-checkpoint-cuda.json
 ```
@@ -81,9 +87,9 @@ Maximum full-bank absolute errors versus the reference were 1.43e-6 (CPU) and
 
 ```bash
 OMP_NUM_THREADS=2 .venv/bin/python -m pytest -o addopts= -q
-.venv/bin/python benchmarks/benchmark_dsp3_kernels.py --device cpu --threads 8 \
+.venv/bin/python -m benchmarks.benchmark_dsp3_kernels --device cpu --threads 8 \
   --output benchmarks/results/dsp3-cpu8.json
-.venv/bin/python benchmarks/benchmark_dsp3_kernels.py --device cuda --threads 1 \
+.venv/bin/python -m benchmarks.benchmark_dsp3_kernels --device cuda --threads 1 \
   --output benchmarks/results/dsp3-cuda.json
 ```
 

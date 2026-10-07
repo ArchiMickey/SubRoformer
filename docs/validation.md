@@ -1,5 +1,8 @@
 # Standalone preparation validation
 
+Historical module paths below refer to the recorded source revisions.
+For current package imports and commands, see [installation](installation.md).
+
 ## Apple Silicon / Metal inference
 
 Verified on 2026-09-06 on arm64 macOS 26.6.2 with a fresh project `.venv`,

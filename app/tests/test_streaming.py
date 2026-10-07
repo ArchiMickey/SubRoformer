@@ -4,9 +4,9 @@ import torch
 
 from app.streaming import separate_audio, separate_overlap_add
 from tests.legacy_overlap_add import separate_overlap_add as reference_overlap_add
-from model_utils import build_model
-from inference import load_separator
-from checkpoint_utils import export_safetensors
+from subroformer.model_utils import build_model
+from subroformer.inference.engine import load_separator
+from subroformer.checkpoint_utils import export_safetensors
 from omegaconf import OmegaConf
 from tests.helpers import tiny_config
 

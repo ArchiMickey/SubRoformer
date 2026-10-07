@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from training_utils import load_config
+from subroformer.training.training_utils import load_config
 
 
 def test_release_contains_only_base_configs():
@@ -10,13 +10,13 @@ def test_release_contains_only_base_configs():
     expected = {f"sbroformer_base_{stem}.yaml" for stem in ["4stem", "vocals", "bass", "drums", "other"]}
     expected.add("sbroformer_base_4stem_silu.yaml")
     expected.add("sbroformer_base_4stem_silu_dsp2.yaml")
-    assert {path.name for path in (root / "configs").glob("*.yaml")} == expected
+    assert {path.name for path in (root / "subroformer/configs").glob("*.yaml")} == expected
 
 
 def test_release_dsp2_config_contract():
     root = Path(__file__).resolve().parents[1]
-    original = load_config(root / "configs/sbroformer_base_4stem_silu.yaml")
-    config = load_config(root / "configs/sbroformer_base_4stem_silu_dsp2.yaml")
+    original = load_config(root / "subroformer/configs/sbroformer_base_4stem_silu.yaml")
+    config = load_config(root / "subroformer/configs/sbroformer_base_4stem_silu_dsp2.yaml")
     assert config.model.dsp_backend == "dsp2"
     assert original.model.dsp_backend == "dsp3"
     original.model.dsp_backend = "dsp2"
@@ -25,8 +25,8 @@ def test_release_dsp2_config_contract():
 
 def test_release_silu_config_contract():
     root = Path(__file__).resolve().parents[1]
-    base = load_config(str(root / "configs" / "sbroformer_base_4stem.yaml"))
-    config = load_config(str(root / "configs" / "sbroformer_base_4stem_silu.yaml"))
+    base = load_config(str(root / "subroformer/configs" / "sbroformer_base_4stem.yaml"))
+    config = load_config(str(root / "subroformer/configs" / "sbroformer_base_4stem_silu.yaml"))
     assert "extends" not in config
     assert config.model.fusion_type == "silu"
     assert config.model.pop("dsp_backend") == "dsp3"
@@ -38,7 +38,7 @@ def test_release_silu_config_contract():
 
 def test_release_four_stem_config_contract():
     root = Path(__file__).resolve().parents[1]
-    config = load_config(str(root / "configs" / "sbroformer_base_4stem.yaml"))
+    config = load_config(str(root / "subroformer/configs" / "sbroformer_base_4stem.yaml"))
     assert "extends" not in config
     assert config.model.num_stems == 4
     assert config.training.target_instrument is None
@@ -49,7 +49,7 @@ def test_release_four_stem_config_contract():
 @pytest.mark.parametrize("stem", ["vocals", "bass", "drums", "other"])
 def test_release_single_stem_config_contract(stem):
     root = Path(__file__).resolve().parents[1]
-    config = load_config(str(root / "configs" / f"sbroformer_base_{stem}.yaml"))
+    config = load_config(str(root / "subroformer/configs" / f"sbroformer_base_{stem}.yaml"))
     assert "extends" not in config
     assert config.model.num_stems == 1
     assert config.model.dim == 576

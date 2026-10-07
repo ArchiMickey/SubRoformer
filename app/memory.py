@@ -7,7 +7,7 @@ import psutil
 import torch
 from PySide6.QtCore import QThread, Signal
 
-from inference import resolve_device
+from subroformer.inference.engine import resolve_device
 
 
 @dataclass

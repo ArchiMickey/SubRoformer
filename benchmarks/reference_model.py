@@ -1,5 +1,5 @@
-from dsp.subband_fast_triangle import SubbandFilter
-from model_utils import build_model
+from subroformer.frontend.dsp.subband_fast_triangle import SubbandFilter
+from subroformer.model_utils import build_model
 
 
 def build_reference_model(config):

@@ -7,25 +7,24 @@ from pathlib import Path
 import platform
 import statistics
 import subprocess
-import sys
 
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 from benchmarks.benchmark_dsp2_kernels import measure
-import dsp2.subband_fast_triangle as filter_module
-from dsp2 import SubbandFilter
-from dsp2.mps_kernel import is_available
-from dsp2.utils import _shift_frequency_reference, shift_frequency
-from inference import DEFAULT_CHECKPOINT, DEFAULT_CONFIG, load_audio, load_separator
+import subroformer.frontend.dsp2.subband_fast_triangle as filter_module
+from subroformer.frontend.dsp2 import SubbandFilter
+from subroformer.frontend.dsp2.mps_kernel import is_available
+from subroformer.frontend.dsp2.utils import _shift_frequency_reference, shift_frequency
+from subroformer.inference.engine import DEFAULT_CHECKPOINT, DEFAULT_CONFIG, load_audio, load_separator
+from subroformer.configs import get_config_path
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", choices=["torch", "coreml"], required=True)
-    parser.add_argument("--config", type=Path, default=ROOT / DEFAULT_CONFIG)
+    parser.add_argument("--config", type=Path, default=get_config_path(Path(DEFAULT_CONFIG).name))
     parser.add_argument("--checkpoint", type=Path, default=ROOT / DEFAULT_CHECKPOINT)
     parser.add_argument("--artifact", type=Path, default=ROOT / "artifacts/coreml-perceptual-200k-fp16")
     parser.add_argument("--audio", type=Path)
@@ -43,7 +42,7 @@ def main():
         bank = model.sb_filter
         files = [arguments.config, arguments.checkpoint]
     else:
-        from coreml_inference import load_local_coreml_separator
+        from subroformer.inference.coreml import load_local_coreml_separator
 
         model, config = load_local_coreml_separator(arguments.artifact, dsp_device="mps")
         bank = model.dsp.sb_filter
@@ -58,7 +57,7 @@ def main():
     parent = model if arguments.backend == "torch" else model.dsp
     operations = [("reference", _shift_frequency_reference, uncached_bank), ("kernel", shift_frequency, bank)]
     if arguments.backend == "coreml":
-        from dsp.inference_optimized import InferenceSubbandFilter as LegacyFilter
+        from subroformer.frontend.dsp.inference_optimized import InferenceSubbandFilter as LegacyFilter
 
         operations.append(("legacy", shift_frequency, LegacyFilter(uncached_bank, level=3).eval()))
     samples = int(config.audio.chunk_size)
@@ -108,9 +107,9 @@ def main():
     reference_ms = statistics.median(timings["reference"])
     kernel_ms = statistics.median(timings["kernel"])
     sources = [ROOT / name for name in (
-        "dsp2/utils.py", "dsp2/mps_kernel.py", "dsp2/csrc/shift_frequency_mps.metal", "dsp2/inference_optimized.py",
-        "dsp/inference_optimized.py",
-        "coreml_inference.py", "model.py", "benchmarks/benchmark_dsp2_mps_model.py",
+        "subroformer/frontend/dsp2/utils.py", "subroformer/frontend/dsp2/mps_kernel.py", "subroformer/frontend/dsp2/csrc/shift_frequency_mps.metal", "subroformer/frontend/dsp2/inference_optimized.py",
+        "subroformer/frontend/dsp/inference_optimized.py",
+        "subroformer/inference/coreml.py", "subroformer/model.py", "benchmarks/benchmark_dsp2_mps_model.py",
         "benchmarks/benchmark_dsp2_kernels.py",
     )]
     report = dict(backend=arguments.backend, device="mps", platform=platform.platform(),

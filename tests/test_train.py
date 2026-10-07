@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 
-from train import resolve_distributed_timeout, validate_training_data_sources
+from subroformer.training.train import resolve_distributed_timeout, validate_training_data_sources
 from tests.helpers import tiny_config
 
 

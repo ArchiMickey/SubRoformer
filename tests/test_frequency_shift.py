@@ -5,9 +5,9 @@ import torch
 from torch.utils._python_dispatch import TorchDispatchMode
 from torch.utils._pytree import tree_flatten
 
-import dsp2.utils as dsp_utils
-from dsp2 import SubbandFilter, mel_linear_banks_triangle
-from dsp2.utils import shift_frequency
+import subroformer.frontend.dsp2.utils as dsp_utils
+from subroformer.frontend.dsp2 import SubbandFilter, mel_linear_banks_triangle
+from subroformer.frontend.dsp2.utils import shift_frequency
 
 
 @pytest.fixture(params=["cpu", "cuda"])
@@ -120,8 +120,8 @@ def test_mel_filterbank_reconstruction_exceeds_seventy_db_away_from_boundaries(d
 
 
 def test_dsp2_preserves_filter_state_and_forward_backward(monkeypatch, device):
-    import dsp.subband_fast_triangle as original_module
-    import dsp.utils as original_utils
+    import subroformer.frontend.dsp.subband_fast_triangle as original_module
+    import subroformer.frontend.dsp.utils as original_utils
 
     assert original_module.shift_frequency is original_utils.shift_frequency
     assert original_utils.shift_frequency is not shift_frequency

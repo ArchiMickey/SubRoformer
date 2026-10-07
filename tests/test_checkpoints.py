@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from checkpoint_utils import export_safetensors, load_checkpoint, load_model_checkpoint
+from subroformer.checkpoint_utils import export_safetensors, load_checkpoint, load_model_checkpoint
 
 
 @pytest.mark.parametrize("wrapper", [None, "model", "state_dict", "model_state_dict", "state"])

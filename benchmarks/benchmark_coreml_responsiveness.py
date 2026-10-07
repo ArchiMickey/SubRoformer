@@ -4,7 +4,6 @@ import argparse
 import json
 from pathlib import Path
 import statistics
-import sys
 import threading
 import time
 
@@ -12,11 +11,10 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 from app.coreml_worker import CoreMLProcess
-from coreml_inference import load_local_coreml_separator
-from inference import load_audio
+from subroformer.inference.coreml import load_local_coreml_separator
+from subroformer.inference.engine import load_audio
 
 
 def measure(model, audio):

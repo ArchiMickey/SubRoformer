@@ -3,8 +3,8 @@ import math
 import pytest
 import torch
 
-from dsp2.cpu_kernel import is_available, shift_frequency_cpu
-from dsp2.utils import _phase_steps, _shift_frequency_reference
+from subroformer.frontend.dsp2.cpu_kernel import is_available, shift_frequency_cpu
+from subroformer.frontend.dsp2.utils import _phase_steps, _shift_frequency_reference
 
 
 @pytest.mark.parametrize("dtype", [torch.complex64, torch.complex128])

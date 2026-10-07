@@ -6,7 +6,7 @@ Both released models separate vocals, bass, drums, and other at 48 kHz.
 Download weights from [Hugging Face](https://huggingface.co/archimickey/SubRoformer/tree/main/checkpoints)
 and keep each checkpoint paired with its matching config:
 
-| Model | FP16 checkpoint (under `checkpoints/`) | Config (under `configs/`) |
+| Model | FP16 checkpoint (under `checkpoints/`) | Config (under `subroformer/configs/`) |
 | --- | --- | --- |
 | Original Base, 1.4M EMA | `subroformer_base_4stem_1400000_ema_fp16.safetensors` | `sbroformer_base_4stem.yaml` (GEGLU) |
 | Perceptual finetuning, +200k EMA (default) | `subroformer_base_4stem_1400000_ema_perceptual_finetuned_200000_fp16.safetensors` | `sbroformer_base_4stem_silu.yaml` (SiLU) |
@@ -14,19 +14,19 @@ and keep each checkpoint paired with its matching config:
 The default app/CLI download is the perceptual-finetuned model. To use the
 original Base model, download its weights first and pass both local paths;
 missing paths fall back to the default perceptual artifacts, not the original
-Base model. See [inference](inference.md) for commands and loading rules.
+Base model. See [inference](../subroformer/inference/README.md) for commands and loading rules.
 
 The perceptual model adds 200k finetuning updates to the 1.4M EMA. Its evaluated
 EMA `.pt` copy has SHA-256
 `b96bcf33296f8dfca7b0e81c3745f25a589564594b546537f4e202da3b67cf32`.
 This checksum identifies the source EMA, not the FP16 export. See the
 [test SDR table](../README.md#checkpoints-and-test-sdr) and
-[evaluation protocol](evaluation.md#published-test-results) for both models.
+[evaluation protocol](../subroformer/training/README.md#published-test-results) for both models.
 
 ## Original Base checkpoint: 1,400,000 updates
 
 - File: `checkpoints/subroformer_base_4stem_1400000_ema.pt`
-- Config: `configs/sbroformer_base_4stem.yaml`
+- Config: `subroformer/configs/sbroformer_base_4stem.yaml`
 - Weights: EMA, decay 0.999; original wrapper contains `decay` and `model`.
 - Saved training state: `global_update=1400000`, `epoch=1399`.
 - SHA-256: `4085bca04659063402b2e2f0af3c497e0071d6bdfa84e672c00e34bcbea0d4f9`.
@@ -70,7 +70,7 @@ This is a lossy storage conversion, not a new SDR evaluation; the original
 benchmark below has not been rerun for FP16 weights.
 
 ```bash
-uv run python -m checkpoint_utils \
+uv run python -m subroformer.checkpoint_utils \
   --checkpoint checkpoints/subroformer_base_4stem_1400000_ema.safetensors \
   --output checkpoints/subroformer_base_4stem_1400000_ema_fp16.safetensors --fp16
 ```

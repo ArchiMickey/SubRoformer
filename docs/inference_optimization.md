@@ -2,9 +2,9 @@
 
 ## Integrated default (September 8, 2026)
 
-Step 3 is now constructed automatically by `SBRoformer` for the waveform-subband frontend. Normal `load_separator`, `build_model`, and direct `SBRoformer` calls require no extra optimization wrapper. The shared implementation lives in `dsp/inference_optimized.py`, which is included by the existing DSP package configuration. The macOS app and DMG were subsequently rebuilt on September 8, 2026, with the integrated module verified inside the bundle.
+Step 3 is now constructed automatically by `SBRoformer` for the waveform-subband frontend. Normal `load_separator`, `build_model`, and direct `SBRoformer` calls require no extra optimization wrapper. The shared implementation lives in `subroformer/frontend/dsp/inference_optimized.py`, which is included by the existing DSP package configuration. The macOS app and DMG were subsequently rebuilt on September 8, 2026, with the integrated module verified inside the bundle.
 
-Eval-mode forwards with gradients disabled use the cached path on CPU and MPS. Training and gradient-enabled execution retain the legacy DSP path; returning to training also releases inference caches. Checkpoint keys/values, transformer arithmetic, and the legacy `dsp/subband_fast_triangle.py` implementation are unchanged. Global-STFT frontends are unaffected. Modulation caching remains experimental and is not enabled by default.
+Eval-mode forwards with gradients disabled use the cached path on CPU and MPS. Training and gradient-enabled execution retain the legacy DSP path; returning to training also releases inference caches. Checkpoint keys/values, transformer arithmetic, and the legacy `subroformer/frontend/dsp/subband_fast_triangle.py` implementation are unchanged. Global-STFT frontends are unaffected. Modulation caching remains experimental and is not enabled by default.
 
 The tables below retain the original sequential experiments. Their source hashes describe the pre-merge files, not today's integrated model. `benchmarks/reference_model.py` rebuilds the unchanged legacy filter for continued comparisons, so the benchmark does not accidentally compare two already-optimized models.
 
@@ -17,18 +17,18 @@ The merged model was checked with the trained checkpoint using the same two-seco
 
 Every measured forward and full-checkpoint silence/tone/variable-length probe had zero maximum absolute error. The raw [merged-model result](../benchmarks/results/inference_20260907/merged_step_3.json) contains timings and provenance; compare within this run, not across runs with different clock/thermal conditions.
 
-Merge validation: `pytest tests app/tests/test_memory.py app/tests/test_streaming.py` passed **445 tests**, with **3 skipped**. CPU training-gradient comparisons remain exact. MPS backward repeated legacy runs differed by up to approximately `3.3e-7`, as did legacy-versus-merged runs; the MPS gradient test uses `rtol=1e-5, atol=1e-6`, while inference checks remain strictly bitwise. Returning to training clears the cache. Source hashing confirms `model.py` differs from the pre-merge version only by the import and filter-construction lines; all previously existing DSP/inference files remain intact.
+Merge validation: `pytest tests app/tests/test_memory.py app/tests/test_streaming.py` passed **445 tests**, with **3 skipped**. CPU training-gradient comparisons remain exact. MPS backward repeated legacy runs differed by up to approximately `3.3e-7`, as did legacy-versus-merged runs; the MPS gradient test uses `rtol=1e-5, atol=1e-6`, while inference checks remain strictly bitwise. Returning to training clears the cache. Source hashing confirms `subroformer/model.py` differs from the pre-merge version only by the import and filter-construction lines; all previously existing DSP/inference files remain intact.
 
 ## Scope and preservation
 
-The initial experiments started on September 7 and completed on September 8, 2026. Their reference was the existing working-tree model, including the user's pre-existing edits, not a clean Git checkout. During those experiments, `model.py`, `inference.py`, `model_utils.py`, and every existing `dsp/*.py` file remained unchanged from the pre-experiment SHA-256 snapshot. Full hashes are recorded in each result JSON. The subsequently authorized merge changes only filter construction in `model.py`.
+The initial experiments started on September 7 and completed on September 8, 2026. Their reference was the existing working-tree model, including the user's pre-existing edits, not a clean Git checkout. During those experiments, `model.py`, `inference.py`, `model_utils.py`, and every existing `dsp/*.py` file remained unchanged from the pre-experiment SHA-256 snapshot. Full hashes are recorded in each result JSON. These historical paths remain in the recorded provenance; the implementation now lives under `subroformer/`. The subsequently authorized merge changed only filter construction in the model.
 
-The initial `inference_optimized.py` entry point remains available for experiment compatibility. It produces an independent deep copy with a selected optimization level, without globally patching modules or changing the input instance. It is no longer needed for ordinary model use.
+The initial `subroformer/inference/optimized.py` entry point remains available for experiment compatibility. It produces an independent deep copy with a selected optimization level, without globally patching modules or changing the input instance. It is no longer needed for ordinary model use.
 
 ## Protocol
 
 - Hardware: Apple M5 Pro; PyTorch 2.14.0; CPU restricted to four PyTorch threads.
-- Configuration: `configs/sbroformer_base_4stem.yaml` (128 realized bands, four outputs).
+- Configuration: `subroformer/configs/sbroformer_base_4stem.yaml` (128 realized bands, four outputs).
 - Weights: local trained `subroformer_base_4stem_1400000_ema.safetensors`, loaded strictly as FP32 on both devices. The artifact hash is in the result files.
 - Input: seeded synthetic noise at amplitude scale 0.02, shape `[1, 2, 96000]`, corresponding to two seconds at 48 kHz. This is a forward benchmark, not a music-quality benchmark.
 - CPU: FP32. MPS: FP16 autocast with FP32 stored weights. Both use evaluation and inference modes.
@@ -91,10 +91,10 @@ Use the existing model-loading API; no optimization wrapper is required:
 ```python
 import torch
 
-from inference import load_separator
+from subroformer.inference.engine import load_separator
 
 model, config = load_separator(
-    "configs/sbroformer_base_4stem.yaml",
+    "subroformer/configs/sbroformer_base_4stem.yaml",
     "checkpoints/subroformer_base_4stem_1400000_ema.safetensors",
     device="cpu",
 )
@@ -111,7 +111,7 @@ For MPS, load on `device="mps"` and use `torch.autocast("mps", dtype=torch.float
 Choose a new output path; the runner refuses to overwrite existing results:
 
 ```sh
-.venv/bin/python benchmarks/benchmark_inference_optimized.py \
+.venv/bin/python -m benchmarks.benchmark_inference_optimized \
   --level 3 --merged --repeats 11 --verify-probes \
   --output benchmarks/results/inference_rerun.json
 

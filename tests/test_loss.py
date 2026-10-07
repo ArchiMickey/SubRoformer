@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import torch
 import torch.nn.functional as F
 
-from training_utils import multiresolution_stft_l1, separation_loss
+from subroformer.training.training_utils import multiresolution_stft_l1, separation_loss
 
 
 def test_mrstft_matches_zfturbo_complex_l1_sum():

@@ -11,11 +11,11 @@ import soundfile as sf
 import torch
 from omegaconf import OmegaConf
 
-from inference import separate_file
-from inference import load_separator, separate_audio, separate_overlap_add
-from checkpoint_utils import export_safetensors
+from subroformer.inference.engine import separate_file
+from subroformer.inference.engine import load_separator, separate_audio, separate_overlap_add
+from subroformer.checkpoint_utils import export_safetensors
 from tests.helpers import STEMS, tiny_config
-from training_utils import build_model
+from subroformer.training.training_utils import build_model
 
 
 @pytest.mark.parametrize("samples", [20, 128, 277])
@@ -44,8 +44,8 @@ def test_named_inference_matches_evaluation_core(tmp_path, samples, joint):
 def test_inference_import_does_not_load_evaluation_dependencies():
     result = subprocess.run(
         [sys.executable, "-c",
-         "import sys; import inference; "
-         "assert all(name not in sys.modules for name in ('evaluate', 'museval', 'accelerate'))"],
+         "import sys; import subroformer.inference.engine; "
+         "assert all(name not in sys.modules for name in ('subroformer.training.evaluate', 'museval', 'accelerate'))"],
         capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, result.stderr
@@ -108,7 +108,6 @@ def test_file_inference_rejects_invalid_window_settings(tmp_path, hop_ratio, bat
 def test_training_and_inference_cli_without_private_dependencies(tmp_path):
     from tests.helpers import make_dataset
 
-    root = Path(__file__).resolve().parents[1]
     config = tiny_config(num_steps=1, target_instrument=None)
     config.model.num_stems = 4
     config.training.save_every_updates = 1
@@ -117,9 +116,10 @@ def test_training_and_inference_cli_without_private_dependencies(tmp_path):
     data_root = make_dataset(tmp_path / "train", songs=2)
     output_root = tmp_path / "training"
     environment = dict(os.environ, CUDA_VISIBLE_DEVICES="", WANDB_MODE="disabled",
-                       OMP_NUM_THREADS="1", MKL_NUM_THREADS="1", PYTHONPATH=str(root))
+                       OMP_NUM_THREADS="1", MKL_NUM_THREADS="1")
+    environment.pop("PYTHONPATH", None)
     result = subprocess.run(
-        [sys.executable, str(root / "train.py"), "--config", str(config_path),
+        [sys.executable, "-m", "subroformer.training.train", "--config", str(config_path),
          "--data_path", str(data_root), "--output_dir", str(output_root),
          "--max_updates", "1", "--eval_every_updates", "0"],
         cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=120,
@@ -136,7 +136,7 @@ def test_training_and_inference_cli_without_private_dependencies(tmp_path):
     assert all(torch.isfinite(value).all() for value in raw_state.values())
     assert any(not torch.equal(value, ema_state[name]) for name, value in raw_state.items())
     result = subprocess.run(
-        [sys.executable, str(root / "inference.py"), "--config", str(config_path),
+        [sys.executable, "-m", "subroformer.inference", "--config", str(config_path),
          "--checkpoint", str(output_root / "model_ema.pt"),
          "--input", str(data_root / "song_00" / "mixture.wav"),
          "--output_dir", str(tmp_path / "separated"), "--device", "cpu"],

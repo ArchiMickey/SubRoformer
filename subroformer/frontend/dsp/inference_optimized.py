@@ -6,10 +6,10 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange
 
-from dsp.analytic import real_to_analytic
-from dsp.convolve import fftconvolve
-from dsp.subband_fast_triangle import SubbandFilter
-from dsp.utils import shift_frequency
+from .analytic import real_to_analytic
+from .convolve import fftconvolve
+from .subband_fast_triangle import SubbandFilter
+from .utils import shift_frequency
 
 
 OPTIMIZATION_STEPS = {
