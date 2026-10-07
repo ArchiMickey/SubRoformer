@@ -60,6 +60,89 @@ improvement; that requires matched listening validation. It adds 200k updates
 to the 1.4M Base and uses the matching **SiLU** config, not the original
 **GEGLU** config. See [checkpoint files and configs](docs/checkpoints.md).
 
+## Quick start
+
+Run these commands from the repository root with Python 3.11 and a PyTorch
+installation suitable for your hardware:
+
+```bash
+uv venv --python 3.11
+uv pip install --python .venv/bin/python -e .
+```
+
+See [source installation](docs/installation.md) for environment details.
+
+### Train
+
+Prepare aligned 48 kHz stereo stems for each song:
+
+```text
+data/musdb18hq/train/<song>/{mixture,vocals,bass,drums,other}.wav
+```
+
+Train the Base four-stem model on one CUDA GPU with BF16 support:
+
+```bash
+uv run accelerate launch --num_processes 1 --gpu_ids 0 --mixed_precision bf16 \
+  --module subroformer.training.train \
+  --config subroformer/configs/sbroformer_base_4stem.yaml \
+  --data_path data/musdb18hq/train \
+  --output_dir checkpoints/my_run
+```
+
+Add `--max_updates 2` for a short smoke run. At completion, training saves
+`model.pt` and `model_ema.pt` in the output directory; use `model_ema.pt` for
+inference with the same YAML config. See the [training guide](subroformer/training/README.md)
+for multiple GPUs and resuming training.
+
+### Inference from the CLI
+
+Use the released perceptual-finetuned checkpoint (downloaded automatically
+if absent locally):
+
+```bash
+uv run python -m subroformer.inference \
+  --input song.wav --output_dir outputs/song
+```
+
+Or use the checkpoint from your training run:
+
+```bash
+uv run python -m subroformer.inference \
+  --config subroformer/configs/sbroformer_base_4stem.yaml \
+  --checkpoint checkpoints/my_run/model_ema.pt \
+  --input song.wav --output_dir outputs/my_run
+```
+
+The CLI selects CUDA, then MPS, then CPU automatically. Override with
+`--device cuda`, `--device mps`, or `--device cpu`. It writes `vocals.wav`,
+`bass.wav`, `drums.wav`, and `other.wav` at 48 kHz, resampling input as needed.
+
+### Inference in Python
+
+Load the released checkpoint once and reuse it for multiple songs:
+
+```python
+from subroformer.inference.engine import (
+    load_audio, load_separator, resolve_amp_dtype, separate_audio,
+)
+
+model, config = load_separator(device="auto")
+audio = load_audio("song.wav", int(config.audio.sample_rate))
+stems = separate_audio(
+    model, audio, config,
+    amp_dtype=resolve_amp_dtype(next(model.parameters()).device),
+)
+vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
+```
+
+For your own weights, pass
+`config_path="subroformer/configs/sbroformer_base_4stem.yaml"` and
+`checkpoint_path="checkpoints/my_run/model_ema.pt"` to `load_separator`.
+Keep each checkpoint paired with the config used to train it. See the
+[inference guide](subroformer/inference/README.md) for cache, offline, and
+Core ML options.
+
 ## Documentation
 
 | Task | Guide |
