@@ -3,14 +3,19 @@
 # Subband frontends
 
 The waveform-subband frontend analyzes audio into frequency-range signals and
-synthesizes the separated waveforms. Choose its DSP implementation through
-`model.dsp_backend`:
+synthesizes the separated waveforms. Its implementation versions live under
+`subroformer/frontend/subband/`; choose one through `model.dsp_backend`:
 
 | Backend | Implementation and guide |
 | --- | --- |
-| `dsp` | Legacy PyTorch analysis/synthesis under [dsp/](dsp/), with inference filter FFT caching |
-| `dsp2` | Wrapped fixed-point phase modulation with native CPU/CUDA/MPS kernels; [DSP2 guide](dsp2/README.md) |
-| `dsp3` | Imported snapshot matching the optimized DSP2 math, with its own native kernel identity and provenance; [DSP3 guide](dsp3/README.md) |
+| `dsp` | Legacy PyTorch analysis/synthesis under [dsp/](subband/dsp/), with inference filter FFT caching |
+| `dsp2` | Wrapped fixed-point phase modulation with native CPU/CUDA/MPS kernels; [DSP2 guide](subband/dsp2/README.md) |
+| `dsp3` | Imported snapshot matching the optimized DSP2 math, with its own native kernel identity and provenance; [DSP3 guide](subband/dsp3/README.md) |
+
+`subroformer/frontend/subband_v2/` provides a separate complex FIR filterbank
+with an explicit band count through `SubbandFilterV2`. Its complex subband
+representation differs from the V1 representation used by existing SBRoformer
+checkpoints, so it is not selected by `model.dsp_backend`.
 
 DSP2 and DSP3 require `frontend_type: waveform_subband`. Global-STFT frontends
 reject those explicit backend selections.
