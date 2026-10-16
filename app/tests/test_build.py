@@ -11,10 +11,10 @@ def test_bundle_includes_dsp3_native_sources():
     spec = ast.parse((root / "app" / "SubStemStudio.spec").read_text())
     constants = [node.value for node in ast.walk(spec) if isinstance(node, ast.Constant)]
     assert "subroformer/configs" in constants
-    assert "subroformer/frontend/dsp2/csrc" in constants
-    assert "subroformer/frontend/dsp3/csrc" in constants
+    assert "subroformer/frontend/subband/dsp2/csrc" in constants
+    assert "subroformer/frontend/subband/dsp3/csrc" in constants
     for name in ("shift_frequency_cpu.cpp", "shift_frequency_mps.metal"):
-        assert (root / "subroformer" / "frontend" / "dsp3" / "csrc" / name).is_file()
+        assert (root / "subroformer" / "frontend" / "subband" / "dsp3" / "csrc" / name).is_file()
 
 
 @pytest.mark.parametrize("platform", ["darwin", "win32", "linux"])

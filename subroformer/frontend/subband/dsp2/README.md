@@ -1,4 +1,4 @@
-[← Frontend guide](../README.md)
+[← Frontend guide](../../README.md)
 
 # Optional fixed-point DSP backend
 

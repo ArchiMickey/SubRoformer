@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from subroformer.frontend.dsp.inference_optimized import InferenceSubbandFilter
-from subroformer.frontend.dsp2 import SubbandFilter
+from subroformer.frontend.subband.dsp.inference_optimized import InferenceSubbandFilter
+from subroformer.frontend.subband.dsp2 import SubbandFilter
 from subroformer.inference.optimized import optimize_for_inference
 from tests.helpers import tiny_config
 from subroformer.training.training_utils import build_model

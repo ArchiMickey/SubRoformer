@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from subroformer.frontend.dsp3 import SubbandFilter, mel_linear_banks_triangle
-from subroformer.frontend.dsp3.inference_optimized import InferenceSubbandFilter
+from subroformer.frontend.subband.dsp3 import SubbandFilter, mel_linear_banks_triangle
+from subroformer.frontend.subband.dsp3.inference_optimized import InferenceSubbandFilter
 
 
 pytestmark = pytest.mark.skipif(not torch.backends.mps.is_available(), reason="MPS required")

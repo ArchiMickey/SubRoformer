@@ -1,4 +1,4 @@
-[← Frontend guide](../README.md)
+[← Frontend guide](../../README.md)
 
 # DSP3 default and checkpoint compatibility
 
@@ -18,10 +18,10 @@ model:
 ## What changed
 
 Imported the local `../SBRoformer/dsp3` snapshot, with source SHA256 hashes in
-`subroformer/frontend/dsp3/source_manifest.json`. The source was untracked, so these hashes identify
+`subroformer/frontend/subband/dsp3/source_manifest.json`. The source was untracked, so these hashes identify
 the snapshot rather than its repository HEAD. FIR design, triangular banks,
 FFT operations, decimation, and checkpoint tensor names remain unchanged.
-The imported MIT license is retained in `subroformer/frontend/dsp3/LICENSE`.
+The imported MIT license is retained in `subroformer/frontend/subband/dsp3/LICENSE`.
 The manifest and historical benchmark JSONs retain their original `dsp3/...`
 paths and hashes; the package move does not rewrite that provenance.
 

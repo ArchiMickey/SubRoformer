@@ -2,9 +2,9 @@
 
 ## Integrated default (September 8, 2026)
 
-Step 3 is now constructed automatically by `SBRoformer` for the waveform-subband frontend. Normal `load_separator`, `build_model`, and direct `SBRoformer` calls require no extra optimization wrapper. The shared implementation lives in `subroformer/frontend/dsp/inference_optimized.py`, which is included by the existing DSP package configuration. The macOS app and DMG were subsequently rebuilt on September 8, 2026, with the integrated module verified inside the bundle.
+Step 3 is now constructed automatically by `SBRoformer` for the waveform-subband frontend. Normal `load_separator`, `build_model`, and direct `SBRoformer` calls require no extra optimization wrapper. The shared implementation lives in `subroformer/frontend/subband/dsp/inference_optimized.py`, which is included by the existing DSP package configuration. The macOS app and DMG were subsequently rebuilt on September 8, 2026, with the integrated module verified inside the bundle.
 
-Eval-mode forwards with gradients disabled use the cached path on CPU and MPS. Training and gradient-enabled execution retain the legacy DSP path; returning to training also releases inference caches. Checkpoint keys/values, transformer arithmetic, and the legacy `subroformer/frontend/dsp/subband_fast_triangle.py` implementation are unchanged. Global-STFT frontends are unaffected. Modulation caching remains experimental and is not enabled by default.
+Eval-mode forwards with gradients disabled use the cached path on CPU and MPS. Training and gradient-enabled execution retain the legacy DSP path; returning to training also releases inference caches. Checkpoint keys/values, transformer arithmetic, and the legacy `subroformer/frontend/subband/dsp/subband_fast_triangle.py` implementation are unchanged. Global-STFT frontends are unaffected. Modulation caching remains experimental and is not enabled by default.
 
 The tables below retain the original sequential experiments. Their source hashes describe the pre-merge files, not today's integrated model. `benchmarks/reference_model.py` rebuilds the unchanged legacy filter for continued comparisons, so the benchmark does not accidentally compare two already-optimized models.
 

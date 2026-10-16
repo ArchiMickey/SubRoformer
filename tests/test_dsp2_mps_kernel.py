@@ -1,8 +1,8 @@
 import pytest
 import torch
 
-from subroformer.frontend.dsp2.mps_kernel import is_available, shift_frequency_mps
-from subroformer.frontend.dsp2.utils import _phase_steps, _shift_frequency_reference, shift_frequency
+from subroformer.frontend.subband.dsp2.mps_kernel import is_available, shift_frequency_mps
+from subroformer.frontend.subband.dsp2.utils import _phase_steps, _shift_frequency_reference, shift_frequency
 
 
 pytestmark = pytest.mark.skipif(not is_available(), reason="MPS and shader compilation required")
@@ -107,7 +107,7 @@ def test_mps_frequencies_remain_nonlearnable():
 
 
 def test_mps_shader_errors_are_not_silently_suppressed(monkeypatch):
-    import subroformer.frontend.dsp2.mps_kernel as kernel_module
+    import subroformer.frontend.subband.dsp2.mps_kernel as kernel_module
 
     def fail():
         raise RuntimeError("shader compilation failed")

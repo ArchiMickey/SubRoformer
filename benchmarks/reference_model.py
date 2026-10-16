@@ -1,4 +1,4 @@
-from subroformer.frontend.dsp.subband_fast_triangle import SubbandFilter
+from subroformer.frontend.subband.dsp.subband_fast_triangle import SubbandFilter
 from subroformer.model_utils import build_model
 
 

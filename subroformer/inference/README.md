@@ -174,7 +174,7 @@ The runtime defaults to fixed-point DSP3 when the artifact config omits
 `dsp_backend`. On MPS this uses the native Metal modulation kernel and retains
 the inference filter FFT cache. Explicit `dsp_backend: dsp` remains supported.
 This changes only the runtime DSP, not the compiled neural network; see
-[DSP3 parity and validation limits](../frontend/dsp3/README.md).
+[DSP3 parity and validation limits](../frontend/subband/dsp3/README.md).
 Core ML uses `CPU_AND_GPU`; this is not an Apple Neural Engine deployment, nor
 a claim of improved speed. Core ML schedules supported operations itself.
 The earlier Base artifacts remain under `coreml/base-4stem-v1/` (FP32) and

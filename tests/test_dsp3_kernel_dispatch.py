@@ -1,9 +1,9 @@
 import pytest
 import torch
 
-import subroformer.frontend.dsp3.subband_fast_triangle as filter_module
-from subroformer.frontend.dsp3 import SubbandFilter, mel_linear_banks_triangle
-from subroformer.frontend.dsp3.utils import _shift_frequency_reference, shift_frequency
+import subroformer.frontend.subband.dsp3.subband_fast_triangle as filter_module
+from subroformer.frontend.subband.dsp3 import SubbandFilter, mel_linear_banks_triangle
+from subroformer.frontend.subband.dsp3.utils import _shift_frequency_reference, shift_frequency
 
 
 @pytest.fixture(params=["cpu", "cuda", "mps"])
@@ -59,7 +59,7 @@ def test_dispatch_second_derivatives(device):
 def test_dispatch_uses_native_kernel_and_falls_back(device, monkeypatch):
     import importlib
 
-    module = importlib.import_module(f"subroformer.frontend.dsp3.{device}_kernel")
+    module = importlib.import_module(f"subroformer.frontend.subband.dsp3.{device}_kernel")
     name = f"shift_frequency_{device}"
     native = getattr(module, name)
     calls = []

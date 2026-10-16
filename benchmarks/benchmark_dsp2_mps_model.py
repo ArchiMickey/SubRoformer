@@ -13,10 +13,10 @@ import torch
 ROOT = Path(__file__).resolve().parents[1]
 
 from benchmarks.benchmark_dsp2_kernels import measure
-import subroformer.frontend.dsp2.subband_fast_triangle as filter_module
-from subroformer.frontend.dsp2 import SubbandFilter
-from subroformer.frontend.dsp2.mps_kernel import is_available
-from subroformer.frontend.dsp2.utils import _shift_frequency_reference, shift_frequency
+import subroformer.frontend.subband.dsp2.subband_fast_triangle as filter_module
+from subroformer.frontend.subband.dsp2 import SubbandFilter
+from subroformer.frontend.subband.dsp2.mps_kernel import is_available
+from subroformer.frontend.subband.dsp2.utils import _shift_frequency_reference, shift_frequency
 from subroformer.inference.engine import DEFAULT_CHECKPOINT, DEFAULT_CONFIG, load_audio, load_separator
 from subroformer.configs import get_config_path
 
@@ -57,7 +57,7 @@ def main():
     parent = model if arguments.backend == "torch" else model.dsp
     operations = [("reference", _shift_frequency_reference, uncached_bank), ("kernel", shift_frequency, bank)]
     if arguments.backend == "coreml":
-        from subroformer.frontend.dsp.inference_optimized import InferenceSubbandFilter as LegacyFilter
+        from subroformer.frontend.subband.dsp.inference_optimized import InferenceSubbandFilter as LegacyFilter
 
         operations.append(("legacy", shift_frequency, LegacyFilter(uncached_bank, level=3).eval()))
     samples = int(config.audio.chunk_size)
@@ -107,8 +107,8 @@ def main():
     reference_ms = statistics.median(timings["reference"])
     kernel_ms = statistics.median(timings["kernel"])
     sources = [ROOT / name for name in (
-        "subroformer/frontend/dsp2/utils.py", "subroformer/frontend/dsp2/mps_kernel.py", "subroformer/frontend/dsp2/csrc/shift_frequency_mps.metal", "subroformer/frontend/dsp2/inference_optimized.py",
-        "subroformer/frontend/dsp/inference_optimized.py",
+        "subroformer/frontend/subband/dsp2/utils.py", "subroformer/frontend/subband/dsp2/mps_kernel.py", "subroformer/frontend/subband/dsp2/csrc/shift_frequency_mps.metal", "subroformer/frontend/subband/dsp2/inference_optimized.py",
+        "subroformer/frontend/subband/dsp/inference_optimized.py",
         "subroformer/inference/coreml.py", "subroformer/model.py", "benchmarks/benchmark_dsp2_mps_model.py",
         "benchmarks/benchmark_dsp2_kernels.py",
     )]

@@ -339,7 +339,7 @@ GPU-accelerated DSP, or CPU for CPU DSP. Auto selects MPS when available.
 DSP defaults to DSP3, including the optimized Metal modulation kernel and
 inference filter FFT cache on MPS. The bundled app includes the Metal shader;
 no separate compiler installation, model re-export, or new weights are needed.
-See [DSP3 validation and benchmarks](../subroformer/frontend/dsp3/README.md).
+See [DSP3 validation and benchmarks](../subroformer/frontend/subband/dsp3/README.md).
 MPS DSP requires PyTorch 2.14+; Core ML requires macOS 15+ and blank custom
 config/checkpoint fields. Select PyTorch manually for custom models.
 Core ML inference runs in a dedicated spawned process so its native prediction
