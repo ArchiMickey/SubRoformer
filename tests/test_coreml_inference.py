@@ -9,9 +9,9 @@ from omegaconf import OmegaConf
 from subroformer.inference import coreml as coreml_inference
 from subroformer.inference import engine as inference
 from subroformer.model_utils import build_model
-from subroformer.frontend.dsp2 import SubbandFilter
-from subroformer.frontend.dsp3 import SubbandFilter as DSP3SubbandFilter
-from subroformer.frontend.dsp.inference_optimized import InferenceSubbandFilter
+from subroformer.frontend.subband.dsp2 import SubbandFilter
+from subroformer.frontend.subband.dsp3 import SubbandFilter as DSP3SubbandFilter
+from subroformer.frontend.subband.dsp.inference_optimized import InferenceSubbandFilter
 from tests.helpers import tiny_config
 
 

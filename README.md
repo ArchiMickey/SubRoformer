@@ -10,7 +10,7 @@ desktop app and tools for SubRoformer's training, evaluation, and inference.
 
 The perceptual-checkpoint config and waveform inference now default to DSP3,
 with native CPU/CUDA/MPS modulation and the existing MPS FFT cache. Explicit
-DSP/DSP2 configs remain supported. See [DSP3 validation](subroformer/frontend/dsp3/README.md).
+DSP/DSP2 configs remain supported. See [DSP3 validation](subroformer/frontend/subband/dsp3/README.md).
 
 ## Contributions
 

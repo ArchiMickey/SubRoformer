@@ -28,7 +28,7 @@ def file_hash(path):
 
 def source_hashes():
     paths = [ROOT / name for name in ("subroformer/model.py", "subroformer/inference/engine.py", "subroformer/model_utils.py")]
-    paths.extend(sorted((ROOT / "subroformer/frontend/dsp").glob("*.py")))
+    paths.extend(sorted((ROOT / "subroformer/frontend/subband/dsp").glob("*.py")))
     return {str(path.relative_to(ROOT)): file_hash(path) for path in paths}
 
 

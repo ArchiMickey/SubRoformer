@@ -13,9 +13,9 @@ import torch
 from torch.utils.benchmark import Timer
 
 
-import subroformer.frontend.dsp2.subband_fast_triangle as filter_module
-from subroformer.frontend.dsp2 import SubbandFilter, mel_linear_banks_triangle
-from subroformer.frontend.dsp2.utils import _shift_frequency_reference, shift_frequency
+import subroformer.frontend.subband.dsp2.subband_fast_triangle as filter_module
+from subroformer.frontend.subband.dsp2 import SubbandFilter, mel_linear_banks_triangle
+from subroformer.frontend.subband.dsp2.utils import _shift_frequency_reference, shift_frequency
 
 
 def measure(operation, threads, duration, device):
@@ -63,11 +63,11 @@ def main():
     torch.manual_seed(173)
     device = arguments.device
     if device == "cpu":
-        from subroformer.frontend.dsp2.cpu_kernel import is_available
+        from subroformer.frontend.subband.dsp2.cpu_kernel import is_available
     elif device == "cuda":
-        from subroformer.frontend.dsp2.cuda_kernel import is_available
+        from subroformer.frontend.subband.dsp2.cuda_kernel import is_available
     else:
-        from subroformer.frontend.dsp2.mps_kernel import is_available
+        from subroformer.frontend.subband.dsp2.mps_kernel import is_available
     if not is_available():
         raise RuntimeError(f"Native {device} kernel is unavailable")
     results = []
@@ -105,7 +105,7 @@ def main():
         report["macos_version"] = platform.mac_ver()[0]
     report["cpu_affinity"] = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None
     root = Path(__file__).resolve().parents[1]
-    paths = [root / "subroformer/frontend/dsp2" / name for name in (
+    paths = [root / "subroformer/frontend/subband/dsp2" / name for name in (
         "utils.py", "cpu_kernel.py", "cuda_kernel.py", "mps_kernel.py",
         "csrc/shift_frequency_cpu.cpp", "csrc/shift_frequency_mps.metal",
     )]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from ..frontend.dsp.inference_optimized import OPTIMIZATION_STEPS, InferenceSubbandFilter
+from ..frontend.subband.dsp.inference_optimized import OPTIMIZATION_STEPS, InferenceSubbandFilter
 
 
 def optimize_for_inference(model, level: int = 3):
