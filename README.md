@@ -83,11 +83,12 @@ data/musdb18hq/train/<song>/{mixture,vocals,bass,drums,other}.wav
 Train the Base four-stem model on one CUDA GPU with BF16 support:
 
 ```bash
-uv run accelerate launch --num_processes 1 --gpu_ids 0 --mixed_precision bf16 \
-  --module subroformer.training.train \
-  --config subroformer/configs/sbroformer_base_4stem.yaml \
-  --data_path data/musdb18hq/train \
-  --output_dir checkpoints/my_run
+CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
+    --num_processes 1 \
+    --mixed_precision bf16 \
+    --module subroformer.training.train \
+    --config subroformer/configs/sbroformer_base_4stem.yaml \
+    --data_path data/musdb18hq/train
 ```
 
 Add `--max_updates 2` for a short smoke run. At completion, training saves
@@ -102,7 +103,8 @@ if absent locally):
 
 ```bash
 uv run python -m subroformer.inference \
-  --input song.wav --output_dir outputs/song
+  --input demo/song.wav \
+  --output_dir outputs/song
 ```
 
 Or use the checkpoint from your training run:
@@ -111,7 +113,8 @@ Or use the checkpoint from your training run:
 uv run python -m subroformer.inference \
   --config subroformer/configs/sbroformer_base_4stem.yaml \
   --checkpoint checkpoints/my_run/model_ema.pt \
-  --input song.wav --output_dir outputs/my_run
+  --input demo/song.wav \
+  --output_dir outputs/my_run
 ```
 
 The CLI selects CUDA, then MPS, then CPU automatically. Override with
@@ -128,7 +131,7 @@ from subroformer.inference.engine import (
 )
 
 model, config = load_separator(device="auto")
-audio = load_audio("song.wav", int(config.audio.sample_rate))
+audio = load_audio("demo/song.wav", int(config.audio.sample_rate))
 stems = separate_audio(
     model, audio, config,
     amp_dtype=resolve_amp_dtype(next(model.parameters()).device),
