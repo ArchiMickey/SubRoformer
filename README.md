@@ -2,63 +2,20 @@
 
 # SubRoformer
 
-This is the official repository for **SubRoformer: Subband Time-Domain
-Representation for Music Source Separation**.
+This is the official repository for SubRoformer: Subband Time-Domain Representation for Music Source Separation. SubRoformer separates music mixtures into four stems: vocals, bass, drums, and other instruments.
 
-Music source separation into **vocals, bass, drums, and other**, with a local
-desktop app and tools for SubRoformer's training, evaluation, and inference.
+![Subformer](app/assets/subroformer-framework.png)
 
-The perceptual-checkpoint config and waveform inference now default to DSP3,
-with native CPU/CUDA/MPS modulation and the existing MPS FFT cache. Explicit
-DSP/DSP2 configs remain supported. See [DSP3 validation](subroformer/frontend/subband/dsp3/README.md).
-
-## Contributions
-
-- **Subband time-domain representation:** exposes spectral structure while
-  preserving fine temporal and phase information.
-- **Efficient subband analysis–synthesis front end:** reduces redundant full-rate
-  computation and shortens the sequences presented to the separator.
-- **Multiscale axial RoFormer:** captures long-range temporal and cross-band
-  dependencies while retaining fine-grained information for mask estimation.
-
-## The app
-Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
-
-<div align="center">
-
-https://github.com/user-attachments/assets/45b3fa51-0370-4635-a93b-738856479956
-
-</div>
-
-**SubStemStudio** lets you drop in a song, separate four stems, listen
-while separation progresses, and export 48 kHz float32 WAVs. It includes
-synchronized spectrograms and per-stem playback controls.
-
-The source app supports macOS, Windows, and Linux. Core ML is the default on
-macOS 15+; PyTorch supports CUDA, Apple Silicon (MPS), and CPU.
-See the [app installation and usage guide](app/README.md) to get started.
-
-## Checkpoints and test SDR
-
-Both checkpoints are available on
-[Hugging Face](https://huggingface.co/archimickey/SubRoformer).
+## Results and Checkpoints
 
 | Checkpoint | Vocals | Bass | Drums | Other | Mean |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Original Base, 1.4M updates (EMA) | 12.6863 | 11.4961 | 12.2267 | 9.9445 | **11.5884** |
 | Perceptual finetuning, +200k updates (EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
 
-MUSDB18-HQ full-test `museval` SDR in dB (50 songs). Each stem is the median of
-per-song median SDRs; Mean averages the four stem medians. For these extra-data
-checkpoint results, see the
-[evaluation protocol](subroformer/training/README.md#published-test-results).
-They are not separate benchmarks of the FP16 or Core ML exports.
+The model is trained on **100 songs from MUSDB18-HQ** and **500 additional songs from an internal dataset**. Evaluation is conducted on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). The SDR for each stem is computed as the median of the per-song median SDRs, while the Mean SDR is the average across the four stems. For details on the evaluation of checkpoints trained with additional data, see the [evaluation protocol](subroformer/training/README.md#published-test-results). 
 
-The perceptual-finetuned checkpoint sacrifices some SDR (**0.1913 dB** mean)
-to prioritize perceptual quality. SDR alone does not establish a perceptual
-improvement; that requires matched listening validation. It adds 200k updates
-to the 1.4M Base and uses the matching **SiLU** config, not the original
-**GEGLU** config. See [checkpoint files and configs](docs/checkpoints.md).
+The **perceptually fine-tuned checkpoint** prioritizes perceptual quality at the cost of a slight reduction in Mean SDR (**0.1913 dB**). It is trained for an additional **200k updates** starting from the Base checkpoint (1.4M updates) and requires the corresponding **SiLU** configuration rather than the original **GEGLU** configuration. See [checkpoint files and configs](docs/checkpoints.md) for details. Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer).
 
 ## Quick start
 
@@ -71,6 +28,17 @@ uv pip install --python .venv/bin/python -e .
 ```
 
 See [source installation](docs/installation.md) for environment details.
+
+### Inference
+
+Use the released perceptual-finetuned checkpoint (downloaded automatically):
+
+```bash
+uv run python -m subroformer.inference \
+  --input demo/song.wav \
+  --output_dir outputs/song
+```
+
 
 ### Train
 
@@ -91,21 +59,29 @@ CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
     --data_path data/musdb18hq/train
 ```
 
-Add `--max_updates 2` for a short smoke run. At completion, training saves
-`model.pt` and `model_ema.pt` in the output directory; use `model_ema.pt` for
-inference with the same YAML config. See the [training guide](subroformer/training/README.md)
-for multiple GPUs and resuming training.
 
-### Inference from the CLI
+## The app
+Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
 
-Use the released perceptual-finetuned checkpoint (downloaded automatically
-if absent locally):
+<div align="center">
 
-```bash
-uv run python -m subroformer.inference \
-  --input demo/song.wav \
-  --output_dir outputs/song
-```
+https://github.com/user-attachments/assets/45b3fa51-0370-4635-a93b-738856479956
+
+</div>
+
+**SubStemStudio** lets you drop in a song, separate four stems, listen
+while separation progresses, and export 48 kHz float32 WAVs. It includes
+synchronized spectrograms and per-stem playback controls.
+
+The source app supports macOS, Windows, and Linux. Core ML is the default on
+macOS 15+; PyTorch supports CUDA, Apple Silicon (MPS), and CPU.
+See the [app installation and usage guide](app/README.md) to get started.
+
+
+
+See the [training guide](subroformer/training/README.md) for multiple GPUs and resuming training.
+
+
 
 Or use the checkpoint from your training run:
 
@@ -138,13 +114,6 @@ stems = separate_audio(
 )
 vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
 ```
-
-For your own weights, pass
-`config_path="subroformer/configs/sbroformer_base_4stem.yaml"` and
-`checkpoint_path="checkpoints/my_run/model_ema.pt"` to `load_separator`.
-Keep each checkpoint paired with the config used to train it. See the
-[inference guide](subroformer/inference/README.md) for cache, offline, and
-Core ML options.
 
 ## Documentation
 
