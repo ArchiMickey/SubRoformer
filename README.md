@@ -6,7 +6,7 @@ This is the official repository for SubRoformer: Subband Time-Domain Representat
 
 ![Subformer](app/assets/subroformer-framework.png)
 
-## Results and Checkpoints
+## 1. Results
 
 | Checkpoint | Vocals | Bass | Drums | Other | Mean |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -17,7 +17,7 @@ The model is trained on **100 songs from MUSDB18-HQ** and **500 additional songs
 
 The **perceptually fine-tuned checkpoint** prioritizes perceptual quality at the cost of a slight reduction in Mean SDR (**0.1913 dB**). It is trained for an additional **200k updates** starting from the Base checkpoint (1.4M updates) and requires the corresponding **SiLU** configuration rather than the original **GEGLU** configuration. See [checkpoint files and configs](docs/checkpoints.md) for details. Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer).
 
-## Quick start
+## 2. Installation
 
 Run these commands from the repository root with Python 3.11 and a PyTorch
 installation suitable for your hardware:
@@ -29,7 +29,9 @@ uv pip install --python .venv/bin/python -e .
 
 See [source installation](docs/installation.md) for environment details.
 
-### Inference
+## 3. Inference
+
+## 3.1 Inference in Command-line interface (CLI)
 
 Use the released perceptual-finetuned checkpoint (downloaded automatically):
 
@@ -39,28 +41,29 @@ uv run python -m subroformer.inference \
   --output_dir outputs/song
 ```
 
+The CLI selects CUDA, then MPS, then CPU automatically. Override with
+`--device cuda`, `--device mps`, or `--device cpu`. It writes `vocals.wav`,
+`bass.wav`, `drums.wav`, and `other.wav` at 48 kHz, resampling input as needed.
 
-### Train
+### 3.2 Inference in Python
 
-Prepare aligned 48 kHz stereo stems for each song:
+Load the released checkpoint once and reuse it for multiple songs:
 
-```text
-data/musdb18hq/train/<song>/{mixture,vocals,bass,drums,other}.wav
+```python
+from subroformer.inference.engine import (
+    load_audio, load_separator, resolve_amp_dtype, separate_audio,
+)
+
+model, config = load_separator(device="auto")
+audio = load_audio("demo/song.wav", int(config.audio.sample_rate))
+stems = separate_audio(
+    model, audio, config,
+    amp_dtype=resolve_amp_dtype(next(model.parameters()).device),
+)
+vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
 ```
 
-Train the Base four-stem model on one CUDA GPU with BF16 support:
-
-```bash
-CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
-    --num_processes 1 \
-    --mixed_precision bf16 \
-    --module subroformer.training.train \
-    --config subroformer/configs/sbroformer_base_4stem.yaml \
-    --data_path data/musdb18hq/train
-```
-
-
-## The app
+### Use the SubStemStudio App
 Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
 
 <div align="center">
@@ -78,10 +81,57 @@ macOS 15+; PyTorch supports CUDA, Apple Silicon (MPS), and CPU.
 See the [app installation and usage guide](app/README.md) to get started.
 
 
+## 4. Train
+
+This part introduces to train the SubRoFormer system from scratch.
+
+## 4.1 Download dataset
+
+Download the MUSDB18HQ dataset, including
+
+```bash
+bash scripts/download_musdb18hq.sh
+```
+
+The downloaded dataset after compression looks like:
+
+<pre>
+data
+└── musdb18hq (30 GB)
+    ├── train (100 files)
+    │   ├── A Classic Education - NightOwl
+    │   │   ├── bass.wav
+    │   │   ├── drums.wav
+    │   │   ├── mixture.wav
+    │   │   ├── other.wav
+    │   │   └── vocals.wav
+    │   ... 
+    │   └── ...
+    └── test (50 files)
+        ├── Al James - Schoolboy Facination
+        │   ├── bass.wav
+        │   ├── drums.wav
+        │   ├── mixture.wav
+        │   ├── other.wav
+        │   └── vocals.wav
+        ... 
+        └── ...
+</pre>
+
+### 4.2 Train with single GPU card
+
+```bash
+CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
+    --num_processes 1 \
+    --mixed_precision bf16 \
+    --module subroformer.training.train \
+    --config subroformer/configs/sbroformer_base_4stem.yaml \
+    --data_path data/musdb18hq/train
+```
 
 See the [training guide](subroformer/training/README.md) for multiple GPUs and resuming training.
 
-
+### 4.3 Inference
 
 Or use the checkpoint from your training run:
 
@@ -91,28 +141,6 @@ uv run python -m subroformer.inference \
   --checkpoint checkpoints/my_run/model_ema.pt \
   --input demo/song.wav \
   --output_dir outputs/my_run
-```
-
-The CLI selects CUDA, then MPS, then CPU automatically. Override with
-`--device cuda`, `--device mps`, or `--device cpu`. It writes `vocals.wav`,
-`bass.wav`, `drums.wav`, and `other.wav` at 48 kHz, resampling input as needed.
-
-### Inference in Python
-
-Load the released checkpoint once and reuse it for multiple songs:
-
-```python
-from subroformer.inference.engine import (
-    load_audio, load_separator, resolve_amp_dtype, separate_audio,
-)
-
-model, config = load_separator(device="auto")
-audio = load_audio("demo/song.wav", int(config.audio.sample_rate))
-stems = separate_audio(
-    model, audio, config,
-    amp_dtype=resolve_amp_dtype(next(model.parameters()).device),
-)
-vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
 ```
 
 ## Documentation
