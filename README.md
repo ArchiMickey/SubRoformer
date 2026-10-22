@@ -1,39 +1,42 @@
-![SubRoformer — Music Source Separation, with the app icon on the left](app/assets/subroformer-banner.png)
+![SubRoformer — Music Source Separation](app/assets/subroformer-banner.png)
 
 # SubRoformer
 
-This is the official repository for SubRoformer: Subband Time-Domain Representation for Music Source Separation. SubRoformer separates music mixtures into four stems: vocals, bass, drums, and other instruments.
+This is the official repository for **SubRoformer: Subband Time-Domain Representation for Music Source Separation**. SubRoformer separates music mixtures into four stems: **vocals, bass, drums, and other instruments**.
 
-![Subformer](app/assets/subroformer-framework.png)
+![SubRoformer Framework](app/assets/subroformer-framework.png)
 
 ## Results
 
+The following table reports the source separation performance of the released checkpoints on MUSDB18-HQ.
+
 | Checkpoint | Vocals | Bass | Drums | Other | Mean |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Original Base, 1.4M updates (EMA) | 12.6863 | 11.4961 | 12.2267 | 9.9445 | **11.5884** |
-| Perceptual finetuning, +200k updates (EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
+| Base (1.4M updates, EMA) | 12.6863 | 11.4961 | 12.2267 | 9.9445 | **11.5884** |
+| Perceptually fine-tuned (+200k updates, EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
 
-The model is trained on **100 songs from MUSDB18-HQ** and **500 additional songs from an internal dataset**. Evaluation is conducted on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). The SDR for each stem is computed as the median of the per-song median SDRs, while the Mean SDR is the average across the four stems. For details on the evaluation of checkpoints trained with additional data, see the [evaluation protocol](subroformer/training/README.md#published-test-results). 
+The models are trained on **100 songs from MUSDB18-HQ** and **500 additional songs from an internal dataset**. Evaluation is conducted on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). The SDR for each stem is computed as the median of the per-song median SDRs, and the Mean SDR is the average of the four stem medians. For further details, see the [evaluation protocol](subroformer/training/README.md#published-test-results).
 
-The **perceptually fine-tuned checkpoint** prioritizes perceptual quality at the cost of a slight reduction in Mean SDR (**0.1913 dB**). It is trained for an additional **200k updates** starting from the Base checkpoint (1.4M updates) and requires the corresponding **SiLU** configuration rather than the original **GEGLU** configuration. See [checkpoint files and configs](docs/checkpoints.md) for details. Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer).
+The **perceptually fine-tuned checkpoint** prioritizes perceptual quality with a slight reduction in Mean SDR (**0.1913 dB**). It is fine-tuned for an additional **200k updates** from the Base checkpoint (1.4M updates) and uses the corresponding **SiLU** configuration instead of the original **GEGLU** configuration. See [checkpoint files and configs](docs/checkpoints.md) for details.
+
+Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer).
 
 ## 1. Installation
 
-Run these commands from the repository root with Python 3.11 and a PyTorch
-installation suitable for your hardware:
+Run the following commands from the repository root using Python 3.11 and a PyTorch installation compatible with your hardware:
 
 ```bash
 uv venv --python 3.11
 uv pip install --python .venv/bin/python -e .
 ```
 
-See [source installation](docs/installation.md) for environment details.
+See the [installation guide](docs/installation.md) for detailed environment setup instructions.
 
 ## 2. Inference
 
-### 2.1 Inference in Command-line interface (CLI)
+### 2.1 Command-Line Inference (CLI)
 
-Use the released perceptual-finetuned checkpoint (downloaded automatically):
+Run source separation using the released perceptually fine-tuned checkpoint, which is automatically downloaded if not available locally:
 
 ```bash
 uv run python -m subroformer.inference \
@@ -41,13 +44,13 @@ uv run python -m subroformer.inference \
   --output_dir outputs/song
 ```
 
-The CLI selects CUDA, then MPS, then CPU automatically. Override with
-`--device cuda`, `--device mps`, or `--device cpu`. It writes `vocals.wav`,
-`bass.wav`, `drums.wav`, and `other.wav` at 48 kHz, resampling input as needed.
+The CLI automatically selects the available device in the following order: **CUDA → MPS → CPU**. You can manually specify a device using `--device cuda`, `--device mps`, or `--device cpu`.
 
-### 2.2 Inference in Python
+The separated stems are saved as `vocals.wav`, `bass.wav`, `drums.wav`, and `other.wav` at **48 kHz**, with automatic resampling of the input audio when necessary.
 
-Load the released checkpoint once and reuse it for multiple songs:
+### 2.2 Python Inference
+
+Load the released checkpoint once and reuse the model to separate multiple songs:
 
 ```python
 from subroformer.inference.engine import (
@@ -63,8 +66,9 @@ stems = separate_audio(
 vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
 ```
 
-### 2.3 Use the SubStemStudio App
-Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
+### 2.3 SubStemStudio App
+
+Demo using [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
 
 <div align="center">
 
@@ -72,70 +76,65 @@ https://github.com/user-attachments/assets/45b3fa51-0370-4635-a93b-738856479956
 
 </div>
 
-**SubStemStudio** lets you drop in a song, separate four stems, listen
-while separation progresses, and export 48 kHz float32 WAVs. It includes
-synchronized spectrograms and per-stem playback controls.
+**SubStemStudio** provides a graphical interface for music source separation. Users can import a song, separate it into four stems, listen to the results as separation progresses, and export the stems as **48 kHz float32 WAV files**. The app also provides synchronized spectrogram visualization and individual playback controls for each stem.
 
-The source app supports macOS, Windows, and Linux. Core ML is the default on
-macOS 15+; PyTorch supports CUDA, Apple Silicon (MPS), and CPU.
-See the [app installation and usage guide](app/README.md) to get started.
+The app supports **macOS, Windows, and Linux**. Core ML is used by default on macOS 15+, while the PyTorch backend supports CUDA, Apple Silicon (MPS), and CPU.
 
+See the [SubStemStudio installation and usage guide](app/README.md) for details.
 
-## 3. Train
+## 3. Training
 
-This part introduces to train the SubRoFormer system from scratch.
+This section describes how to train SubRoformer from scratch using the MUSDB18-HQ dataset.
 
-## 3.1 Download dataset
+### 3.1 Download the Dataset
 
-Download the MUSDB18HQ dataset, including
+Download and extract the **MUSDB18-HQ** dataset using:
 
 ```bash
 bash scripts/download_musdb18hq.sh
 ```
 
-The downloaded dataset after compression looks like:
+After extraction, the dataset is organized as follows:
 
-<pre>
-data
-└── musdb18hq (30 GB)
-    ├── train (100 files)
-    │   ├── A Classic Education - NightOwl
+```text
+data/
+└── musdb18hq/ (~30 GB)
+    ├── train/ (100 songs)
+    │   ├── A Classic Education - NightOwl/
     │   │   ├── bass.wav
     │   │   ├── drums.wav
     │   │   ├── mixture.wav
     │   │   ├── other.wav
     │   │   └── vocals.wav
-    │   ... 
     │   └── ...
-    └── test (50 files)
-        ├── Al James - Schoolboy Facination
+    └── test/ (50 songs)
+        ├── Al James - Schoolboy Facination/
         │   ├── bass.wav
         │   ├── drums.wav
         │   ├── mixture.wav
         │   ├── other.wav
         │   └── vocals.wav
-        ... 
         └── ...
-</pre>
+```
 
-### 3.2 Train
+### 3.2 Train the Model
 
-For single GPU card:
+To train SubRoformer on a single GPU, run:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
-    --num_processes 1 \
-    --mixed_precision bf16 \
-    --module subroformer.training.train \
-    --config subroformer/configs/sbroformer_base_4stem.yaml \
-    --data_path data/musdb18hq/train
+  --num_processes 1 \
+  --mixed_precision bf16 \
+  --module subroformer.training.train \
+  --config subroformer/configs/sbroformer_base_4stem.yaml \
+  --data_path data/musdb18hq/train
 ```
 
-See the [training guide](subroformer/training/README.md) for multiple GPUs and resuming training.
+For multi-GPU training, checkpoint management, and resuming interrupted training, see the [training guide](subroformer/training/README.md).
 
-### 3.3 Inference
+### 3.3 Inference with a Trained Checkpoint
 
-Or use the checkpoint from your training run:
+To run inference using a checkpoint from your own training run:
 
 ```bash
 uv run python -m subroformer.inference \
@@ -147,23 +146,21 @@ uv run python -m subroformer.inference \
 
 ## Documentation
 
-| Task | Guide |
+| Topic | Guide |
 | --- | --- |
-| App installation, usage, and native builds | [app/README.md](app/README.md) |
-| Python/source installation | [docs/installation.md](docs/installation.md) |
-| Package modules and imports | [subroformer/README.md](subroformer/README.md) |
-| Model configs and inheritance | [subroformer/configs/README.md](subroformer/configs/README.md) |
-| Training and dataset preparation | [Training guide](subroformer/training/README.md) |
-| Evaluation and SDR protocol | [Evaluation guide](subroformer/training/README.md#evaluation) |
-| CLI and Python inference | [Inference guide](subroformer/inference/README.md) |
-| DSP backends and defaults | [Frontend guide](subroformer/frontend/README.md) |
-| Checkpoint downloads and provenance | [docs/checkpoints.md](docs/checkpoints.md) |
-| Core ML setup and export | [Core ML guide](subroformer/inference/README.md#core-ml-inference) |
-| Tests and validation | [docs/testing.md](docs/testing.md) |
-| Historical inference optimization experiments | [docs/inference_optimization.md](docs/inference_optimization.md) |
+| App installation, usage, and native builds | [App Guide](app/README.md) |
+| Python/source installation | [Installation Guide](docs/installation.md) |
+| Package modules and imports | [Package Overview](subroformer/README.md) |
+| Model configurations and inheritance | [Configuration Guide](subroformer/configs/README.md) |
+| Training and dataset preparation | [Training Guide](subroformer/training/README.md) |
+| Evaluation and SDR protocol | [Evaluation Guide](subroformer/training/README.md#evaluation) |
+| CLI and Python inference | [Inference Guide](subroformer/inference/README.md) |
+| DSP backends and defaults | [Frontend Guide](subroformer/frontend/README.md) |
+| Checkpoint downloads and provenance | [Checkpoint Guide](docs/checkpoints.md) |
+| Core ML setup and export | [Core ML Guide](subroformer/inference/README.md#core-ml-inference) |
+| Tests and validation | [Testing Guide](docs/testing.md) |
+| Historical inference optimization experiments | [Inference Optimization](docs/inference_optimization.md) |
 
 ## Acknowledgments
 
-Thanks to Roman Solovyev (ZFTurbo) for
-[Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training),
-from which this project's dataset and DataLoader code are derived.
+We thank **Roman Solovyev (ZFTurbo)** for developing [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), from which parts of the dataset handling and DataLoader code in this repository are derived.
