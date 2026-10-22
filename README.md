@@ -13,9 +13,7 @@ This is the official repository for **SubRoformer: Subband Time-Domain Represent
 | Base (1.4M updates, EMA) | 12.6863 | 11.4961 | 12.2267 | 9.9445 | **11.5884** |
 | Perceptually fine-tuned (+200k updates, EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
 
-The models are trained on **100 MUSDB18-HQ songs** and **500 additional internal songs**. Results are evaluated on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). Each stem's SDR is the median of per-song median SDRs, and Mean is the average across four stems. See the [evaluation protocol](subroformer/training/README.md#published-test-results).
-
-The **perceptually fine-tuned checkpoint** prioritizes perceptual quality with a **0.1913 dB** reduction in Mean SDR. It adds 200k updates to the Base model and uses **SiLU** instead of **GEGLU**. Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer). See [checkpoint details](docs/checkpoints.md).
+The models are trained on **100 MUSDB18-HQ songs** and **500 additional internal songs**. Results are evaluated on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). Each stem's SDR is the median of per-song median SDRs, and Mean is the average across four stems. See the [evaluation protocol](subroformer/training/README.md#published-test-results). All checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer). See [checkpoint details](docs/checkpoints.md).
 
 ## 1. Installation
 
