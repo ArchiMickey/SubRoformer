@@ -8,35 +8,31 @@ This is the official repository for **SubRoformer: Subband Time-Domain Represent
 
 ## Results
 
-The following table reports the source separation performance of the released checkpoints on MUSDB18-HQ.
-
 | Checkpoint | Vocals | Bass | Drums | Other | Mean |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Base (1.4M updates, EMA) | 12.6863 | 11.4961 | 12.2267 | 9.9445 | **11.5884** |
 | Perceptually fine-tuned (+200k updates, EMA, default) | 12.6424 | 11.1357 | 12.0518 | 9.7584 | **11.3971** |
 
-The models are trained on **100 songs from MUSDB18-HQ** and **500 additional songs from an internal dataset**. Evaluation is conducted on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). The SDR for each stem is computed as the median of the per-song median SDRs, and the Mean SDR is the average of the four stem medians. For further details, see the [evaluation protocol](subroformer/training/README.md#published-test-results).
+The models are trained on **100 MUSDB18-HQ songs** and **500 additional internal songs**. Results are evaluated on the **MUSDB18-HQ test set (50 songs)** using `museval` SDR (dB). Each stem's SDR is the median of per-song median SDRs, and Mean is the average across four stems. See the [evaluation protocol](subroformer/training/README.md#published-test-results).
 
-The **perceptually fine-tuned checkpoint** prioritizes perceptual quality with a slight reduction in Mean SDR (**0.1913 dB**). It is fine-tuned for an additional **200k updates** from the Base checkpoint (1.4M updates) and uses the corresponding **SiLU** configuration instead of the original **GEGLU** configuration. See [checkpoint files and configs](docs/checkpoints.md) for details.
-
-Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer).
+The **perceptually fine-tuned checkpoint** prioritizes perceptual quality with a **0.1913 dB** reduction in Mean SDR. It adds 200k updates to the Base model and uses **SiLU** instead of **GEGLU**. Both checkpoints are available on [Hugging Face](https://huggingface.co/archimickey/SubRoformer). See [checkpoint details](docs/checkpoints.md).
 
 ## 1. Installation
 
-Run the following commands from the repository root using Python 3.11 and a PyTorch installation compatible with your hardware:
+Run from the repository root using Python 3.11:
 
 ```bash
 uv venv --python 3.11
 uv pip install --python .venv/bin/python -e .
 ```
 
-See the [installation guide](docs/installation.md) for detailed environment setup instructions.
+See the [installation guide](docs/installation.md) for details.
 
 ## 2. Inference
 
-### 2.1 Command-Line Inference (CLI)
+### 2.1 Command-Line Interface (CLI)
 
-Run source separation using the released perceptually fine-tuned checkpoint, which is automatically downloaded if not available locally:
+Use the released perceptually fine-tuned checkpoint (downloaded automatically if needed):
 
 ```bash
 uv run python -m subroformer.inference \
@@ -44,13 +40,9 @@ uv run python -m subroformer.inference \
   --output_dir outputs/song
 ```
 
-The CLI automatically selects the available device in the following order: **CUDA → MPS → CPU**. You can manually specify a device using `--device cuda`, `--device mps`, or `--device cpu`.
-
-The separated stems are saved as `vocals.wav`, `bass.wav`, `drums.wav`, and `other.wav` at **48 kHz**, with automatic resampling of the input audio when necessary.
+The CLI automatically selects **CUDA → MPS → CPU**, or specify `--device` manually. It outputs four 48 kHz WAV files: `vocals.wav`, `bass.wav`, `drums.wav`, and `other.wav`.
 
 ### 2.2 Python Inference
-
-Load the released checkpoint once and reuse the model to separate multiple songs:
 
 ```python
 from subroformer.inference.engine import (
@@ -68,7 +60,7 @@ vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
 
 ### 2.3 SubStemStudio App
 
-Demo using [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI&list=RDyH88qRmgkGI&start_radio=1):
+Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI):
 
 <div align="center">
 
@@ -76,25 +68,21 @@ https://github.com/user-attachments/assets/45b3fa51-0370-4635-a93b-738856479956
 
 </div>
 
-**SubStemStudio** provides a graphical interface for music source separation. Users can import a song, separate it into four stems, listen to the results as separation progresses, and export the stems as **48 kHz float32 WAV files**. The app also provides synchronized spectrogram visualization and individual playback controls for each stem.
+**SubStemStudio** provides a graphical interface for four-stem separation, real-time progress monitoring, synchronized spectrograms, playback controls, and 48 kHz WAV export.
 
-The app supports **macOS, Windows, and Linux**. Core ML is used by default on macOS 15+, while the PyTorch backend supports CUDA, Apple Silicon (MPS), and CPU.
-
-See the [SubStemStudio installation and usage guide](app/README.md) for details.
+The app supports **macOS, Windows, and Linux**, using Core ML on macOS 15+ by default or PyTorch on CUDA, MPS, and CPU. See the [app guide](app/README.md).
 
 ## 3. Training
 
-This section describes how to train SubRoformer from scratch using the MUSDB18-HQ dataset.
+Train SubRoformer from scratch using MUSDB18-HQ.
 
 ### 3.1 Download the Dataset
-
-Download and extract the **MUSDB18-HQ** dataset using:
 
 ```bash
 bash scripts/download_musdb18hq.sh
 ```
 
-After extraction, the dataset is organized as follows:
+The extracted dataset has the following structure:
 
 ```text
 data/
@@ -117,9 +105,9 @@ data/
         └── ...
 ```
 
-### 3.2 Train the Model
+### 3.2 Train
 
-To train SubRoformer on a single GPU, run:
+Single-GPU training:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
@@ -130,11 +118,9 @@ CUDA_VISIBLE_DEVICES=0 uv run accelerate launch \
   --data_path data/musdb18hq/train
 ```
 
-For multi-GPU training, checkpoint management, and resuming interrupted training, see the [training guide](subroformer/training/README.md).
+See the [training guide](subroformer/training/README.md) for multi-GPU training and checkpoint resumption.
 
-### 3.3 Inference with a Trained Checkpoint
-
-To run inference using a checkpoint from your own training run:
+### 3.3 Inference with Your Checkpoint
 
 ```bash
 uv run python -m subroformer.inference \
@@ -148,19 +134,18 @@ uv run python -m subroformer.inference \
 
 | Topic | Guide |
 | --- | --- |
-| App installation, usage, and native builds | [App Guide](app/README.md) |
-| Python/source installation | [Installation Guide](docs/installation.md) |
-| Package modules and imports | [Package Overview](subroformer/README.md) |
-| Model configurations and inheritance | [Configuration Guide](subroformer/configs/README.md) |
-| Training and dataset preparation | [Training Guide](subroformer/training/README.md) |
-| Evaluation and SDR protocol | [Evaluation Guide](subroformer/training/README.md#evaluation) |
+| App installation and usage | [App Guide](app/README.md) |
+| Installation | [Installation Guide](docs/installation.md) |
+| Model architecture and modules | [Package Overview](subroformer/README.md) |
+| Model configurations | [Configuration Guide](subroformer/configs/README.md) |
+| Training and evaluation | [Training Guide](subroformer/training/README.md) |
 | CLI and Python inference | [Inference Guide](subroformer/inference/README.md) |
-| DSP backends and defaults | [Frontend Guide](subroformer/frontend/README.md) |
-| Checkpoint downloads and provenance | [Checkpoint Guide](docs/checkpoints.md) |
-| Core ML setup and export | [Core ML Guide](subroformer/inference/README.md#core-ml-inference) |
-| Tests and validation | [Testing Guide](docs/testing.md) |
-| Historical inference optimization experiments | [Inference Optimization](docs/inference_optimization.md) |
+| DSP backends | [Frontend Guide](subroformer/frontend/README.md) |
+| Checkpoints | [Checkpoint Guide](docs/checkpoints.md) |
+| Core ML | [Core ML Guide](subroformer/inference/README.md#core-ml-inference) |
+| Testing | [Testing Guide](docs/testing.md) |
+| Inference optimization | [Optimization Guide](docs/inference_optimization.md) |
 
 ## Acknowledgments
 
-We thank **Roman Solovyev (ZFTurbo)** for developing [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), from which parts of the dataset handling and DataLoader code in this repository are derived.
+We thank **Roman Solovyev (ZFTurbo)** for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), from which the dataset handling and DataLoader code are derived.
