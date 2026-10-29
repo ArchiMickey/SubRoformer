@@ -2,12 +2,13 @@
 __author__ = 'Roman Solovyev (ZFTurbo): https://github.com/ZFTurbo/'
 
 
+import math
 import os
 import random
 import numpy as np
 import torch
 import soundfile as sf
-from functools import partial
+from functools import lru_cache, partial
 import pickle
 import itertools
 import multiprocessing
@@ -285,10 +286,115 @@ def prepare_data(config: Union[ConfigDict, OmegaConf], args: argparse.Namespace,
     return train_loader
 
 
-def load_chunk(path, length, chunk_size, offset=None, target_channels = 2):
+# Resampling context (source frames) read on each side of a chunk so the
+# resampler's edge transient falls outside the returned samples. With soxr HQ
+# 44.1k->48k, 147 frames already reproduce a whole-file resample to float32
+# precision; 256 (rounded up to the rate-ratio period) leaves headroom.
+_RESAMPLE_MIN_PAD = 256
+# Largest pad accepted to keep the crop on an exact output-sample boundary.
+_RESAMPLE_MAX_ALIGNED_PAD = 4096
+
+
+@lru_cache(maxsize=None)
+def _file_sample_rate(path):
+    """Native sample rate of an audio file (header read once per process)."""
+    return int(sf.info(path).samplerate)
+
+
+def source_frames_for(target_frames, src_sr, target_sr):
+    """Source frames needed to cover ``target_frames`` samples at ``target_sr``."""
+    target_frames, src_sr, target_sr = int(target_frames), int(src_sr), int(target_sr)
+    if src_sr == target_sr:
+        return target_frames
+    return -(-target_frames * src_sr // target_sr)
+
+
+def target_frames_for(source_frames, src_sr, target_sr):
+    """Samples at ``target_sr`` spanned by ``source_frames`` frames at ``src_sr``."""
+    source_frames, src_sr, target_sr = int(source_frames), int(src_sr), int(target_sr)
+    if src_sr == target_sr:
+        return source_frames
+    return -(-source_frames * target_sr // src_sr)
+
+
+def _resample_pad(src_sr, target_sr):
+    """Return (pad, aligned): ``pad`` source frames of context per side.
+
+    When ``aligned`` the pad is a multiple of the rate-ratio period, so it maps
+    to an integer number of output samples and the crop is exact.
+    """
+    step = src_sr // math.gcd(src_sr, target_sr)
+    if step <= _RESAMPLE_MAX_ALIGNED_PAD:
+        return -(-_RESAMPLE_MIN_PAD // step) * step, True
+    return _RESAMPLE_MIN_PAD, False
+
+
+def _load_chunk_resampled(path, length, chunk_size, offset, src_sr, target_sr):
+    """Read a chunk at ``src_sr`` and return ``(chunk_size, channels)`` at ``target_sr``.
+
+    ``length`` and ``offset`` are in source frames; ``chunk_size`` is in target
+    samples. Uses soxr HQ, the resampler behind librosa's default ``soxr_hq``
+    that evaluation/inference use.
+    """
+    import soxr
+
+    src_chunk = source_frames_for(chunk_size, src_sr, target_sr)
+    if src_chunk <= length:
+        start = np.random.randint(length - src_chunk + 1) if offset is None else int(offset)
+        valid = src_chunk
+    else:
+        start = 0 if offset is None else int(offset)
+        valid = int(length)  # the rate-matched path also reads `length` frames here
+
+    pad, aligned = _resample_pad(src_sr, target_sr)
+    left = min(pad, start)
+    x = sf.read(path, dtype='float32', start=start - left, frames=left + valid + pad, always_2d=True)[0]
+    channels = x.shape[1]
+    available = min(valid, x.shape[0] - left)  # source frames of real chunk content
+    out = np.zeros((chunk_size, channels), dtype=np.float32)
+    if available <= 0:
+        return out
+    if left < pad:
+        # Before the file start is silence, as in a whole-file resample.
+        x = np.concatenate([np.zeros((pad - left, channels), dtype=np.float32), x], axis=0)
+    y = soxr.resample(x, src_sr, target_sr, quality='HQ')
+    first = pad * target_sr // src_sr if aligned else int(round(pad * target_sr / src_sr))
+    keep = min(chunk_size, target_frames_for(available, src_sr, target_sr))
+    y = y[first:first + keep]
+    out[:y.shape[0]] = y
+    return out
+
+
+def _fit_channels(x, path, target_channels):
+    ch = x.shape[1]
+    if ch == target_channels:
+        pass
+    elif ch > target_channels:
+        x = x[:, :target_channels]
+    elif ch == 1:
+        x = np.repeat(x, 2, axis=1)
+    else:
+        raise ValueError(f"Path: {path}, num_channels: {ch}")
+    return x
+
+
+def load_chunk(path, length, chunk_size, offset=None, target_channels = 2, target_sr=None):
     """
     Returns array with shape (target_channels, chunk_size)
+
+    ``length`` and ``offset`` are in frames of the file's native rate (as in
+    the metadata, from ``sf.info().frames``); ``chunk_size`` is in samples at
+    ``target_sr``. When ``target_sr`` is None or equals the file rate the file
+    is read without resampling (the original code path); otherwise a chunk of
+    ``ceil(chunk_size * src_sr / target_sr)`` source frames plus context is read
+    and resampled to exactly ``chunk_size`` samples.
     """
+
+    if target_sr is not None:
+        src_sr = _file_sample_rate(path)
+        if src_sr != int(target_sr):
+            x = _load_chunk_resampled(path, length, chunk_size, offset, src_sr, int(target_sr))
+            return _fit_channels(x, path, target_channels).T
 
     if  chunk_size <= length:
         if offset is None:
@@ -313,18 +419,7 @@ def load_chunk(path, length, chunk_size, offset=None, target_channels = 2):
     elif x.shape[0] > chunk_size:
         x = x[:chunk_size]
 
-
-    ch = x.shape[1]
-    if ch == target_channels:
-        pass
-    elif ch > target_channels:
-        x = x[:, :target_channels]
-    elif ch == 1:
-        x = np.repeat(x, 2, axis=1)
-    else:
-        raise ValueError(f"Path: {path}, num_channels: {ch}")
-
-    return x.T
+    return _fit_channels(x, path, target_channels).T
 
 
 def get_track_set_length(params):
@@ -359,7 +454,8 @@ def get_track_length(params):
 
 
 def process_chunk_worker(args):
-    task, instruments, file_types, min_mean_abs, default_chunk_size = args
+    task, instruments, file_types, min_mean_abs, default_chunk_size = args[:5]
+    target_sr = args[5] if len(args) > 5 else None
     track_path, track_length, offset, chunk_size = task
 
     try:
@@ -370,7 +466,7 @@ def process_chunk_worker(args):
                 if os.path.isfile(path_to_audio_file):
                     try:
                         source = load_chunk(path_to_audio_file, length=track_length, offset=offset,
-                                            chunk_size=chunk_size)
+                                            chunk_size=chunk_size, target_sr=target_sr)
                         if np.abs(source).mean() >= min_mean_abs:
                             instrument_loud_enough = True
                             break
@@ -470,6 +566,33 @@ class MSSDataset(torch.utils.data.Dataset):
         if stem not in self.instruments:
             raise ValueError(f"Unknown random-mixing stem: {stem}")
         return range(len(self.metadata))
+
+    def _track_sample_rate(self, track_path):
+        """Native sample rate shared by the stem/mixture files of a track folder.
+
+        Metadata lengths and chunk offsets are in frames at this rate. Cached per
+        process; the header of each file is read once.
+        """
+        cache = self.__dict__.setdefault('_track_sr_cache', {})
+        if track_path not in cache:
+            rates = {}
+            for name in list(self.instruments) + ['mixture']:
+                for extension in self.file_types:
+                    path = f"{track_path}/{name}.{extension}"
+                    if os.path.isfile(path):
+                        rates[path] = _file_sample_rate(path)
+                        break
+            if len(set(rates.values())) > 1:
+                raise ValueError(
+                    f"Files of track {track_path} have different sample rates: {rates}. "
+                    "Aligned chunk offsets require one native rate per track."
+                )
+            cache[track_path] = next(iter(rates.values()), self.sample_rate)
+        return cache[track_path]
+
+    def _source_chunk_size(self, track_path):
+        """Source frames read for one ``chunk_size`` chunk of a track folder."""
+        return source_frames_for(self.chunk_size, self._track_sample_rate(track_path), self.sample_rate)
 
 
     def __getitem__(self, index):
@@ -651,8 +774,9 @@ class MSSDataset(torch.utils.data.Dataset):
         if track_length is None:
             raise RuntimeError(f"Track length not found: {track_path}")
 
-        if track_length >= self.chunk_size:
-            offset = np.random.randint(track_length - self.chunk_size + 1)
+        src_chunk = self._source_chunk_size(track_path)
+        if track_length >= src_chunk:
+            offset = np.random.randint(track_length - src_chunk + 1)
         else:
             offset = None
 
@@ -665,7 +789,8 @@ class MSSDataset(torch.utils.data.Dataset):
                         path_to_mix_file,
                         track_length,
                         self.chunk_size,
-                        offset=offset
+                        offset=offset,
+                        target_sr=self.sample_rate,
                     )
                     break
                 except Exception as e:
@@ -683,7 +808,8 @@ class MSSDataset(torch.utils.data.Dataset):
                             path_to_audio_file,
                             track_length,
                             self.chunk_size,
-                            offset=offset
+                            offset=offset,
+                            target_sr=self.sample_rate,
                         )
                         active_stem_ids.append(idx)
                         found = True
@@ -718,7 +844,10 @@ class MSSDataset(torch.utils.data.Dataset):
         current_config = {
             'chunk_size': self.chunk_size,
             'min_mean_abs': self.min_mean_abs,
-            'instruments': sorted(self.instruments)
+            'instruments': sorted(self.instruments),
+            # Offsets are source frames chosen for chunks at this rate; caches
+            # written before training resampled (no key) are recomputed.
+            'sample_rate': self.sample_rate,
         }
         if os.path.exists(chunks_cache_path):
             try:
@@ -727,7 +856,8 @@ class MSSDataset(torch.utils.data.Dataset):
                 config_matches = (
                         cached_config.get('chunk_size') == current_config['chunk_size'] and
                         cached_config.get('min_mean_abs') == current_config['min_mean_abs'] and
-                        cached_config.get('instruments') == current_config['instruments']
+                        cached_config.get('instruments') == current_config['instruments'] and
+                        cached_config.get('sample_rate') == current_config['sample_rate']
                 )
                 if config_matches:
                     self.chunks_metadata = cached_chunks['chunks_metadata']
@@ -776,11 +906,14 @@ class MSSDataset(torch.utils.data.Dataset):
 
         tasks = []
         for track_path, track_length in self.metadata:
-            if track_length < self.chunk_size:
-                tasks.append((track_path, track_length, 0, track_length))
+            track_sr = self._track_sample_rate(track_path)
+            src_chunk = source_frames_for(self.chunk_size, track_sr, self.sample_rate)
+            if track_length < src_chunk:
+                tasks.append((track_path, track_length, 0,
+                              target_frames_for(track_length, track_sr, self.sample_rate)))
             else:
-                step = self.chunk_size // 2
-                num_chunks = (track_length - self.chunk_size) // step + 1
+                step = src_chunk // 2
+                num_chunks = (track_length - src_chunk) // step + 1
                 for i in range(num_chunks):
                     offset = i * step
                     tasks.append((track_path, track_length, offset, self.chunk_size))
@@ -816,10 +949,13 @@ class MSSDataset(torch.utils.data.Dataset):
                 need = target_count - len(chunks_metadata)
                 for i in range(batch_size):
                     track_path, track_length = random.choice(self.metadata)
-                    if track_length < self.chunk_size:
-                        tasks.append((track_path, track_length, 0, track_length))
+                    track_sr = self._track_sample_rate(track_path)
+                    src_chunk = source_frames_for(self.chunk_size, track_sr, self.sample_rate)
+                    if track_length < src_chunk:
+                        tasks.append((track_path, track_length, 0,
+                                      target_frames_for(track_length, track_sr, self.sample_rate)))
                     else:
-                        offset = np.random.randint(track_length - self.chunk_size + 1)
+                        offset = np.random.randint(track_length - src_chunk + 1)
                         tasks.append((track_path, track_length, offset, self.chunk_size))
 
                 if multiprocessing.cpu_count() > 1:
@@ -852,8 +988,8 @@ class MSSDataset(torch.utils.data.Dataset):
 
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
 
-            worker_args = [(task, self.instruments, self.file_types, self.min_mean_abs, self.chunk_size) for task in
-                           tasks]
+            worker_args = [(task, self.instruments, self.file_types, self.min_mean_abs, self.chunk_size,
+                            self.sample_rate) for task in tasks]
 
             results = []
             if should_print:
@@ -884,7 +1020,7 @@ class MSSDataset(torch.utils.data.Dataset):
                     if os.path.isfile(path_to_audio_file):
                         try:
                             source = load_chunk(path_to_audio_file, length=track_length, offset=offset,
-                                                chunk_size=chunk_size)
+                                                chunk_size=chunk_size, target_sr=self.sample_rate)
                             if np.abs(source).mean() >= self.min_mean_abs:
                                 instrument_loud_enough = True
                                 break
@@ -1080,7 +1216,8 @@ class MSSDataset(torch.utils.data.Dataset):
                     path_to_audio_file = track_path + '/{}.{}'.format(instr, extension)
                     if os.path.isfile(path_to_audio_file):
                         try:
-                            source = load_chunk(path_to_audio_file, track_length, self.chunk_size)
+                            source = load_chunk(path_to_audio_file, track_length, self.chunk_size,
+                                                target_sr=self.sample_rate)
                         except Exception as e:
                             # Sometimes error during FLAC reading, catch it and use zero stem
                             if should_print:
@@ -1090,7 +1227,8 @@ class MSSDataset(torch.utils.data.Dataset):
             else:
                 track_path, track_length = random.choice(metadata[instr])
                 try:
-                    source = load_chunk(track_path, track_length, self.chunk_size)
+                    source = load_chunk(track_path, track_length, self.chunk_size,
+                                        target_sr=self.sample_rate)
                 except Exception as e:
                     # Sometimes error during FLAC reading, catch it and use zero stem
                     if should_print:
@@ -1183,9 +1321,10 @@ class MSSDataset(torch.utils.data.Dataset):
                     offset = None
                 else:
                     if offset_key not in shared_offsets:
+                        src_chunk = self._source_chunk_size(track_path)
                         shared_offsets[offset_key] = (
-                            np.random.randint(track_length - self.chunk_size + 1)
-                            if track_length >= self.chunk_size else 0
+                            np.random.randint(track_length - src_chunk + 1)
+                            if track_length >= src_chunk else 0
                         )
                     offset = shared_offsets[offset_key]
 
@@ -1198,6 +1337,7 @@ class MSSDataset(torch.utils.data.Dataset):
                             track_length,
                             self.chunk_size,
                             offset=offset,
+                            target_sr=self.sample_rate,
                         )
                         break
                 if source is None:
@@ -1231,7 +1371,8 @@ class MSSDataset(torch.utils.data.Dataset):
                         if track_length is None:
                             source = np.zeros((2, self.chunk_size), dtype=np.float32)
                         else:
-                            source = load_chunk(path_to_audio_file, track_length, self.chunk_size, offset=offset)
+                            source = load_chunk(path_to_audio_file, track_length, self.chunk_size, offset=offset,
+                                                target_sr=self.sample_rate)
                     except Exception as e:
                         if should_print:
                             print('Error: {} Path: {}'.format(e, path_to_audio_file))
@@ -1255,9 +1396,10 @@ class MSSDataset(torch.utils.data.Dataset):
         track_path, track_length = random.choice(self.metadata)
         should_print = (not dist.is_initialized() or dist.get_rank() == 0)
         attempts = 10
+        src_chunk = self._source_chunk_size(track_path)
         while attempts:
-            if track_length >= self.chunk_size:
-                common_offset = np.random.randint(track_length - self.chunk_size + 1)
+            if track_length >= src_chunk:
+                common_offset = np.random.randint(track_length - src_chunk + 1)
             else:
                 common_offset = None
             res = []
@@ -1273,7 +1415,8 @@ class MSSDataset(torch.utils.data.Dataset):
                                 path_to_audio_file,
                                 track_length,
                                 self.chunk_size,
-                                offset=common_offset
+                                offset=common_offset,
+                                target_sr=self.sample_rate,
                             )
                         except Exception as e:
                             if should_print:
@@ -1293,7 +1436,8 @@ class MSSDataset(torch.utils.data.Dataset):
                 path_to_mix_file = track_path + '/mixture.{}'.format(extension)
                 if os.path.isfile(path_to_mix_file):
                     try:
-                        mix = load_chunk(path_to_mix_file, track_length, self.chunk_size, offset=common_offset)
+                        mix = load_chunk(path_to_mix_file, track_length, self.chunk_size, offset=common_offset,
+                                         target_sr=self.sample_rate)
                     except Exception as e:
                         if should_print:
                             print('Error loading mix: {} Path: {}'.format(e, path_to_mix_file))
