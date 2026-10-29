@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import torch
 from accelerate import Accelerator
-from accelerate.utils import InitProcessGroupKwargs
+from accelerate.utils import InitProcessGroupKwargs, set_seed
 from omegaconf import OmegaConf
 from torch.optim import AdamW
 
@@ -81,11 +81,20 @@ def train(args: argparse.Namespace) -> None:
         config.training.project_name = args.project_name
     if args.max_updates is not None:
         config.training.max_updates = int(args.max_updates)
+    if args.seed is not None:
+        config.training.seed = int(args.seed)
     if args.eval_every_updates is not None:
         if args.eval_every_updates < 0:
             raise ValueError("--eval_every_updates must be non-negative")
         config.training.eval_every_updates = int(args.eval_every_updates)
     training = config.training
+    seed = int(training.get("seed", 0))
+    config.training.seed = seed
+    # Seeds model initialization and dataset construction (random, NumPy,
+    # torch, CUDA). The loader shuffles with its own generator from the same
+    # seed, so models that consume different amounts of RNG at init still see
+    # the same data stream.
+    set_seed(seed)
     output_dir = Path(args.output_dir or training.get("output_dir", "checkpoints/sbroformer"))
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -119,7 +128,7 @@ def train(args: argparse.Namespace) -> None:
         persistent_workers=bool(training.get("persistent_workers", True)),
         prefetch_factor=int(training.get("prefetch_factor", 2)),
         multiprocessing_context=training.get("multiprocessing_context", None),
-        seed=int(training.get("seed", 0)),
+        seed=seed,
     )
     train_loader = prepare_data(config, loader_args, int(training.batch_size))
 
@@ -157,6 +166,10 @@ def train(args: argparse.Namespace) -> None:
             metadata = json.loads(metadata_path.read_text())
             global_update = int(metadata.get("global_update", 0))
             start_epoch = int(metadata.get("epoch", 0))
+        # load_state restores the global RNGs; reseed the loader's generator
+        # too, or a resumed run would replay the data stream from update 0.
+        if train_loader.generator is not None:
+            train_loader.generator.manual_seed(seed + 1_000_003 * (global_update + 1))
 
     max_grad_norm = resolve_max_grad_norm(training.get("max_grad_norm", None))
     save_every = int(training.get("save_every_updates", 0))
@@ -291,6 +304,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--eval_root")
     parser.add_argument("--resume")
     parser.add_argument("--max_updates", type=int)
+    parser.add_argument("--seed", type=int, help="overrides training.seed")
     parser.add_argument("--eval_every_updates", type=int)
     parser.add_argument("--target_instrument", choices=["vocals", "bass", "drums", "other"])
     parser.add_argument("--log_with")
