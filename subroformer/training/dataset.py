@@ -163,8 +163,14 @@ def prepare_data(config: Union[ConfigDict, OmegaConf], args: argparse.Namespace,
 
     Args:
         config: Dataset configuration passed to MSSDataset.
-        args: Must provide data_path, results_path, dataset_type, and DataLoader settings.
+        args: Must provide data_path, results_path, dataset_type, and DataLoader settings;
+            ``args.seed`` (default 0) seeds the loader's own generator.
         batch_size: Per-process mini-batch size.
+
+    The loader draws its shuffle order and its workers' base seed (which seeds
+    ``random``, NumPy and torch in each worker) from a dedicated generator, so
+    the data stream depends only on the seed and rank, not on how much of the
+    global RNG model construction consumed.
 
     Returns:
         Configured DataLoader for the training split.
@@ -195,12 +201,17 @@ def prepare_data(config: Union[ConfigDict, OmegaConf], args: argparse.Namespace,
     dataset_type = args.dataset_type
     metadata_path = os.path.join(args.results_path, f"metadata_{dataset_type}.pkl")
 
-    def make_loader(trainset, sampler=None, shuffle=False):
+    seed = int(getattr(args, 'seed', 0))
+
+    def make_loader(trainset, sampler=None, shuffle=False, rank=0):
+        generator = torch.Generator()
+        generator.manual_seed(seed + 7919 * rank)
         loader_kwargs = dict(
             dataset=trainset,
             batch_size=batch_size,
             sampler=sampler,
             shuffle=shuffle,
+            generator=generator,
             num_workers=args.num_workers,
             pin_memory=args.pin_memory,
             persistent_workers=args.persistent_workers if args.num_workers > 0 else False,
@@ -237,7 +248,7 @@ def prepare_data(config: Union[ConfigDict, OmegaConf], args: argparse.Namespace,
                 max_sources=random_mixing.get('max_sources', 1),
                 num_replicas=world_size,
                 rank=rank,
-                seed=getattr(args, 'seed', 0),
+                seed=seed,
                 drop_last=True,
             )
         else:
@@ -246,10 +257,11 @@ def prepare_data(config: Union[ConfigDict, OmegaConf], args: argparse.Namespace,
                 num_replicas=world_size,
                 rank=rank,
                 shuffle=True,
+                seed=seed,
                 drop_last=True
             )
 
-        train_loader = make_loader(trainset, sampler=sampler)
+        train_loader = make_loader(trainset, sampler=sampler, rank=rank)
     else:
         trainset = dataset_class(
             config,
@@ -263,7 +275,7 @@ def prepare_data(config: Union[ConfigDict, OmegaConf], args: argparse.Namespace,
             sampler = RandomMixingSampler(
                 trainset,
                 max_sources=random_mixing.get('max_sources', 1),
-                seed=getattr(args, 'seed', 0),
+                seed=seed,
                 drop_last=True,
             )
             train_loader = make_loader(trainset, sampler=sampler)
@@ -853,7 +865,8 @@ class MSSDataset(torch.utils.data.Dataset):
                 for result in pool.imap_unordered(process_chunk_worker, worker_args):
                     results.append(result)
 
-            for result in results:
+            # imap_unordered completes in any order; sort for a reproducible chunk list.
+            for result in sorted(results):
                 track_path, offset, is_loud_enough = result
                 if is_loud_enough:
                     chunks_metadata.append((track_path, offset))
@@ -1045,6 +1058,13 @@ class MSSDataset(torch.utils.data.Dataset):
             if should_print:
                 print('Unknown dataset type: {}. Must be 1, 2, 3, 4, 5 or 6'.format(self.dataset_type))
             exit()
+
+        # Collection order depends on thread completion and set iteration, so fix
+        # it: seeded sampling (random.choice over metadata) must be reproducible.
+        if isinstance(metadata, dict):
+            metadata = {instr: sorted(tuple(m) for m in items) for instr, items in metadata.items()}
+        else:
+            metadata = sorted(tuple(m) for m in metadata)
 
         # Save metadata
         pickle.dump(metadata, open(self.metadata_path, 'wb'))
