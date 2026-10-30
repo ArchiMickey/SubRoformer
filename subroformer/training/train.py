@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 import torch
 from accelerate import Accelerator
+from accelerate.data_loader import skip_first_batches
 from accelerate.utils import InitProcessGroupKwargs, set_seed
 from omegaconf import OmegaConf
 from torch.optim import AdamW
@@ -133,6 +134,9 @@ def train(args: argparse.Namespace) -> None:
     train_loader = prepare_data(config, loader_args, int(training.batch_size))
 
     model = build_model(config)
+    # Model init must match across ranks, but in-process data sampling
+    # (num_workers=0) draws from these global RNGs, so give each rank its own.
+    set_seed(seed + 7919 * accelerator.process_index)
     optimizer = AdamW(
         model.parameters(),
         lr=float(training.lr),
@@ -159,17 +163,25 @@ def train(args: argparse.Namespace) -> None:
 
     global_update = 0
     start_epoch = 0
+    skip_batches = 0
     if args.resume:
         accelerator.load_state(args.resume)
         metadata_path = Path(args.resume, "training_state.json")
         if metadata_path.exists():
             metadata = json.loads(metadata_path.read_text())
             global_update = int(metadata.get("global_update", 0))
-            start_epoch = int(metadata.get("epoch", 0))
+        # Resume at the next unseen micro-batch; the saved epoch index alone
+        # would replay that whole epoch, even when the save closed it.
+        start_epoch, skip_batches = divmod(
+            global_update * accelerator.gradient_accumulation_steps, len(train_loader)
+        )
         # load_state restores the global RNGs; reseed the loader's generator
         # too, or a resumed run would replay the data stream from update 0.
+        # Keep the rank term so ranks don't draw identical batches.
         if train_loader.generator is not None:
-            train_loader.generator.manual_seed(seed + 1_000_003 * (global_update + 1))
+            train_loader.generator.manual_seed(
+                seed + 7919 * accelerator.process_index + 1_000_003 * (global_update + 1)
+            )
 
     max_grad_norm = resolve_max_grad_norm(training.get("max_grad_norm", None))
     save_every = int(training.get("save_every_updates", 0))
@@ -192,7 +204,11 @@ def train(args: argparse.Namespace) -> None:
             train_loader.sampler.set_epoch(epoch)
         model.train()
 
-        for stems, mixture in train_loader:
+        epoch_loader = train_loader
+        if skip_batches:
+            epoch_loader = skip_first_batches(train_loader, skip_batches)
+            skip_batches = 0
+        for stems, mixture in epoch_loader:
             mixture = mixture.to(accelerator.device, non_blocking=True)
             target = stems.to(accelerator.device, non_blocking=True)
             if target.ndim == 4 and target.shape[1] == 1:
