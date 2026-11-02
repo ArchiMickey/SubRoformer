@@ -396,6 +396,7 @@ def test_shift_stem_solos_without_seeking(application, monkeypatch, gesture):
         for stem in stems:
             window.receive_audio(stem, 0, np.full((2, 4000), .1, dtype=np.float32))
         monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
+        window.player.lookahead = 10
         window.show()
         window.activateWindow()
         window.pause_playback.setFocus()
@@ -406,6 +407,7 @@ def test_shift_stem_solos_without_seeking(application, monkeypatch, gesture):
                 window.player.pause()
             for number, stem in enumerate(stems, 2):
                 for repeat in range(2):
+                    queued = len(window.player.sink.writes) // 4
                     if gesture == "click":
                         QTest.mouseClick(window.stem_buttons[stem], Qt.MouseButton.LeftButton,
                                          Qt.KeyboardModifier.ShiftModifier)
@@ -419,7 +421,7 @@ def test_shift_stem_solos_without_seeking(application, monkeypatch, gesture):
                     assert not window.stem_buttons[MIXTURE_KEY].isChecked()
                     if playing:
                         np.testing.assert_allclose(
-                            np.frombuffer(window.player.sink.writes, dtype=np.float32), .1)
+                            np.frombuffer(window.player.sink.writes, dtype=np.float32)[queued:], .1)
         assert all(not shortcut.autoRepeat() for shortcut in window.solo_shortcuts)
         window.input.setFocus()
         QTest.keyClick(window.input, Qt.Key.Key_2, Qt.KeyboardModifier.ShiftModifier)
@@ -715,17 +717,19 @@ def test_stem_tabs_mix_and_spectrograms_only_seek(application, monkeypatch):
         for stem in stems:
             window.receive_audio(stem, 0, np.full((2, 4000), .1, dtype=np.float32))
         monkeypatch.setattr(window.player, "create_sink", lambda channels: FakeSink())
+        window.player.lookahead = 10
         assert all(button.isChecked() for button in window.stem_buttons.values())
         window.stem_buttons[MIXTURE_KEY].click()
         assert all(button.isChecked() for button in window.stem_buttons.values())
         window.player.seek_time(.5)
         np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32), .8)
+        queued = len(window.player.sink.writes) // 4
         window.stem_buttons["vocals"].click()
         assert not window.stem_buttons[MIXTURE_KEY].isChecked()
         assert not window.stem_buttons["vocals"].isChecked()
         assert set(window.player.selected) == {"bass", "drums", "other"}
         assert window.player.playing and window.player.position == 500
-        np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32), .3, atol=1e-6)
+        np.testing.assert_allclose(np.frombuffer(window.player.sink.writes, dtype=np.float32)[queued:], .3, atol=1e-6)
         selected = window.player.selected
         window.cards["vocals"].seek_requested.emit("vocals", 1.5)
         assert window.player.selected == selected and window.player.position == 1500
@@ -743,11 +747,12 @@ def test_stem_tabs_mix_and_spectrograms_only_seek(application, monkeypatch):
         window.toggle_playback()
         assert window.player.playing
         sink = window.player.sink
+        queued = len(sink.writes) // 4
         window.mute_all.click()
         assert not window.player.selected and window.player.playing
-        assert window.player.position == 1500 and sink.disposed
-        np.testing.assert_array_equal(np.frombuffer(window.player.sink.writes, dtype=np.float32), 0)
-        window.player.sink.processed = 100000
+        assert window.player.position == 1500 and window.player.sink is sink and not sink.disposed
+        np.testing.assert_array_equal(np.frombuffer(sink.writes, dtype=np.float32)[queued:], 0)
+        window.player.sink.processed = (queued // 2 + 100) * 1000
         window.player.tick()
         assert window.player.position == 1600
         assert "Playing silently" in window.playback_status.text()

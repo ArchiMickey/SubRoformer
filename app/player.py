@@ -46,8 +46,16 @@ class StemAudio:
 
 
 class StemPlayer(QObject):
+    """Plays the selected stems through one live sink.
+
+    Seeking or changing stems while playing only retargets what is written next:
+    resetting a QAudioSink blocks the GUI thread for tens of milliseconds, so at
+    most ``lookahead`` seconds of already queued audio are left to play out.
+    """
+
     changed = Signal()
     failed = Signal(str)
+    lookahead = .06
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -60,6 +68,9 @@ class StemPlayer(QObject):
         self.selected = ()
         self.position = 0
         self.playing = False
+        self.stale = False
+        self.written_bytes = 0
+        self.base_bytes = 0
 
     def reset(self, rate=1, stems=()):
         self.release()
@@ -111,15 +122,32 @@ class StemPlayer(QObject):
         was_playing = self.playing
         if was_playing:
             self.update_position()
-        self.release()
         self.selected = selected
-        if was_playing:
+        if was_playing and self.position < self.available:
+            self.retarget()
+            self.tick()
+        elif was_playing:
+            self.release()
             self.resume()
+        else:
+            self.stale = True
         self.changed.emit()
+
+    @property
+    def queued_bytes(self):
+        return self.written_bytes - self.base_bytes
+
+    def retarget(self):
+        """Continue from ``position`` on the live sink; earlier queued audio plays out first."""
+        tail = -self.written_bytes % self.output_format.bytesPerFrame()
+        self.pending = self.pending[:tail]
+        self.base_bytes = self.written_bytes + tail
+        self.origin = self.position
 
     def release(self):
         self.timer.stop()
         self.playing = False
+        self.stale = False
         if self.sink is not None:
             self.sink.reset()
             self.sink.deleteLater()
@@ -176,13 +204,21 @@ class StemPlayer(QObject):
         self.seek_time(seconds)
 
     def seek_time(self, seconds):
+        target = min(self.available, max(0, int(seconds * self.rate)))
+        if self.playing and target < self.available:
+            self.position = target
+            self.retarget()
+            self.tick()
+            return
         self.release()
-        self.position = min(self.available, max(0, int(seconds * self.rate)))
+        self.position = target
         self.resume()
 
     def resume(self):
         if self.playing or self.channels is None:
             return
+        if self.stale:
+            self.release()
         if self.position >= self.available:
             self.changed.emit()
             return
@@ -197,7 +233,8 @@ class StemPlayer(QObject):
                 self.sink = self.create_sink(self.channels)
                 self.sink.setBufferSize(max(1, self.output_format.sampleRate() // 10) * self.output_format.bytesPerFrame())
                 self.origin = self.position
-                self.queued_bytes = 0
+                self.written_bytes = 0
+                self.base_bytes = 0
                 self.pending = b""
                 self.output = self.sink.start()
                 if self.output is None or self.sink.error() != QtAudio.Error.NoError:
@@ -219,11 +256,11 @@ class StemPlayer(QObject):
             self.changed.emit()
 
     def update_position(self):
-        self.position = min(
-            self.available,
-            self.origin + self.queued_bytes // self.output_format.bytesPerFrame() * self.rate // self.output_format.sampleRate(),
-            self.origin + int(self.sink.processedUSecs() * self.rate / 1_000_000),
-        )
+        frame_bytes = self.output_format.bytesPerFrame()
+        output_rate = self.output_format.sampleRate()
+        processed = int(self.sink.processedUSecs() * output_rate / 1_000_000) - self.base_bytes // frame_bytes
+        played = max(0, min(self.queued_bytes // frame_bytes, processed))
+        self.position = min(self.available, self.origin + played * self.rate // output_rate)
 
     def tick(self):
         if not self.playing:
@@ -243,7 +280,12 @@ class StemPlayer(QObject):
             self.release()
             self.changed.emit()
             return
-        count = min(self.sink.bytesFree(), available_bytes - self.queued_bytes)
+        in_flight = self.written_bytes - int(self.sink.processedUSecs() * output_rate / 1_000_000) * frame_bytes
+        count = min(
+            self.sink.bytesFree(),
+            available_bytes - self.queued_bytes,
+            max(0, int(self.lookahead * output_rate) * frame_bytes - in_flight),
+        )
         if not self.pending:
             count -= count % frame_bytes
         if count > 0:
@@ -262,6 +304,6 @@ class StemPlayer(QObject):
                 self.release()
                 self.failed.emit("Unable to write to the audio output")
             else:
-                self.queued_bytes += written
+                self.written_bytes += written
                 self.pending = self.pending[written:]
         self.changed.emit()
