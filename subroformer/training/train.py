@@ -16,10 +16,11 @@ from omegaconf import OmegaConf
 from torch.optim import AdamW
 
 from .dataset import prepare_data
-from .evaluate import evaluate_subset
+from ..evaluate import evaluate_subsets
 from .training_utils import (
     ModelEMA,
     build_model,
+    fast_sdr,
     load_config,
     make_scheduler,
     save_ema_weights,
@@ -191,6 +192,7 @@ def train(args: argparse.Namespace) -> None:
     eval_audios_num = int(validation.get("audios_num", 5))
     eval_hop_ratio = int(validation.get("hop_ratio", 1))
     eval_batch_size = int(validation.get("batch_size", training.batch_size))
+    eval_scoring_workers = int(validation.get("scoring_workers", 16))
     eval_amp_dtype = {
         "bf16": torch.bfloat16,
         "fp16": torch.float16,
@@ -203,6 +205,8 @@ def train(args: argparse.Namespace) -> None:
         if hasattr(train_loader.sampler, "set_epoch"):
             train_loader.sampler.set_epoch(epoch)
         model.train()
+        accumulated_sdr = 0.0
+        accumulated_batches = 0
 
         epoch_loader = train_loader
         if skip_batches:
@@ -217,6 +221,8 @@ def train(args: argparse.Namespace) -> None:
             with accelerator.accumulate(model):
                 output = model(mixture)
                 loss = separation_loss(output, target, config)
+                accumulated_sdr = accumulated_sdr + fast_sdr(output, target)
+                accumulated_batches += 1
                 accelerator.backward(loss)
 
                 grad_norm = None
@@ -234,12 +240,20 @@ def train(args: argparse.Namespace) -> None:
 
             global_update += 1
             ema.update(accelerator.unwrap_model(model))
+            # Average over ranks so DDP logs the global batch, not rank 0's shard.
+            train_loss, train_sdr = accelerator.reduce(
+                torch.stack([loss.detach().float(), accumulated_sdr / accumulated_batches]),
+                reduction="mean",
+            ).tolist()
             metrics = {
-                "train/loss": float(loss.detach()),
+                "train/loss": train_loss,
+                "train/fast_sdr": train_sdr,
                 "train/lr": optimizer.param_groups[0]["lr"],
                 "train/grad_norm": float(grad_norm.detach()) if torch.is_tensor(grad_norm) else float(grad_norm),
             }
             accelerator.log(metrics, step=global_update)
+            accumulated_sdr = 0.0
+            accumulated_batches = 0
             accelerator.print(
                 f"epoch={epoch} update={global_update}/{total_updates} "
                 f"loss={metrics['train/loss']:.6f} grad_norm={metrics['train/grad_norm']:.4f}"
@@ -251,28 +265,19 @@ def train(args: argparse.Namespace) -> None:
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
 
-                train_eval = evaluate_subset(
+                eval_results = evaluate_subsets(
                     config=config,
                     model=ema.model,
                     root=eval_root,
-                    split="train",
+                    splits=("train", "test"),
                     audios_num=eval_audios_num,
                     hop_ratio=eval_hop_ratio,
                     batch_size=eval_batch_size,
                     amp_dtype=eval_amp_dtype,
                     accelerator=accelerator,
+                    scoring_workers=eval_scoring_workers,
                 )
-                test_eval = evaluate_subset(
-                    config=config,
-                    model=ema.model,
-                    root=eval_root,
-                    split="test",
-                    audios_num=eval_audios_num,
-                    hop_ratio=eval_hop_ratio,
-                    batch_size=eval_batch_size,
-                    amp_dtype=eval_amp_dtype,
-                    accelerator=accelerator,
-                )
+                train_eval, test_eval = eval_results["train"], eval_results["test"]
                 if accelerator.is_main_process:
                     eval_metrics = build_eval_metrics(train_eval, test_eval)
                     accelerator.log(eval_metrics, step=global_update)

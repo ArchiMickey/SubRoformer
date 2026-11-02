@@ -74,7 +74,7 @@ Use the matching config/checkpoint pair listed in
 [checkpoint details](../../docs/checkpoints.md); the example below evaluates the original Base model.
 
 ```bash
-uv run python -m subroformer.training.evaluate \
+uv run python -m subroformer.evaluate \
   --config subroformer/configs/sbroformer_base_4stem.yaml \
   --checkpoint checkpoints/subroformer_base_4stem_1400000_ema.pt \
   --root data/musdb18hq/test --device cuda --precision bf16 \
@@ -84,8 +84,13 @@ uv run python -m subroformer.training.evaluate \
 The evaluator sums the resampled reference stems as model input, matching the
 SBRoformer evaluation protocol; it does not read `mixture.wav`. It computes
 `museval` SDR at 44.1 kHz. Each stem score is the median across songs of per-song
-median window SDR; the joint summary averages the four stem medians. Distributed
+median window SDR; the joint summary reports both the mean and the median of the four stem medians. Distributed
 evaluation shards whole songs and aggregates all rows before taking medians.
+Audio loading and museval scoring overlap separation. `--scoring_workers` sets
+the number of scoring processes **per rank** (default 16; use 0 for inline
+scoring). For periodic training evaluation, set `validation.scoring_workers`
+in the config instead. Training also logs `train/fast_sdr`, a plain per-slice
+SDR diagnostic; it is not the museval metric.
 
 ### Published test results
 

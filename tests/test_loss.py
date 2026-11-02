@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import torch
 import torch.nn.functional as F
 
-from subroformer.training.training_utils import multiresolution_stft_l1, separation_loss
+from subroformer.training.training_utils import fast_sdr, multiresolution_stft_l1, separation_loss
 
 
 def test_mrstft_matches_zfturbo_complex_l1_sum():
@@ -75,3 +75,15 @@ def test_four_stem_separation_loss_matches_equal_stem_average_and_backward():
     actual.backward()
     assert output.grad is not None
     assert torch.isfinite(output.grad).all()
+
+
+def test_fast_sdr_averages_slices_and_handles_perfect_estimates():
+    target = torch.ones(2, 2, 8)
+    output = target.clone()
+    output[0] *= 0.5
+    score = fast_sdr(output, target)
+    assert torch.isfinite(score)
+    expected = (20 * torch.log10(torch.tensor(2.0)) +
+                -10 * torch.log10(torch.tensor(torch.finfo(torch.float32).tiny / 8))) / 2
+    torch.testing.assert_close(score, expected)
+    assert fast_sdr(torch.zeros_like(target), torch.zeros_like(target)) == 0
