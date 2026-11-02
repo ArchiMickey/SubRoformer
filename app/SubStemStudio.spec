@@ -11,6 +11,7 @@ analysis = Analysis(
     binaries=[],
     datas=[(str(root / "subroformer" / "configs"), "subroformer/configs"),
            (str(root / "app" / "assets"), "app/assets"),
+           (str(root / "demo" / "test.wav"), "demo"),
            (str(root / "subroformer" / "frontend" / "subband" / "dsp2" / "csrc"), "subroformer/frontend/subband/dsp2/csrc"),
            (str(root / "subroformer" / "frontend" / "subband" / "dsp3" / "csrc"), "subroformer/frontend/subband/dsp3/csrc")],
     hiddenimports=collect_submodules("librosa"),

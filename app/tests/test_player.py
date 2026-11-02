@@ -60,6 +60,7 @@ class FakeSink:
 def player(monkeypatch):
     application = QCoreApplication.instance() or QCoreApplication([])
     player = StemPlayer()
+    player.lookahead = 10
     monkeypatch.setattr(player, "create_sink", lambda channels: FakeSink())
     player.reset(1000, ["vocals", "drums"])
     player.append("vocals", 0, np.full((2, 1000), .25, dtype=np.float32))
@@ -112,13 +113,13 @@ def test_playback_extends_only_while_running_then_stops_at_edge(player):
     assert len(player.sink.writes) == 50 * 2 * 4
 
 
-def test_future_seek_stays_at_edge_and_switch_discards_old_audio(player):
+def test_future_seek_stays_at_edge_and_switch_keeps_sink_but_replaces_unplayed_audio(player):
     player.seek("vocals", .2)
     previous = player.sink
     player.seek("drums", .3)
-    assert previous.disposed
+    assert player.sink is previous and not previous.disposed
     assert player.stem == "drums"
-    assert np.frombuffer(player.sink.writes, dtype=np.float32)[0] == -.5
+    np.testing.assert_array_equal(np.frombuffer(previous.writes, dtype=np.float32)[-1400:], -.5)
     player.seek("vocals", 50)
     assert player.position == 1000 and not player.playing and player.sink is None
     player.seek("vocals", -2)
@@ -164,15 +165,17 @@ def test_mix_sums_enabled_stems_and_clips_only_final_output(player):
     player.select_stems(["vocals", "drums"])
     player.seek_time(.25)
     np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), .5)
-    previous = player.sink
-    previous.processed = 100000
+    sink = player.sink
+    sink.processed = 100000
+    queued = len(sink.writes)
     player.select_stems(["vocals"])
-    assert previous.disposed and player.position == 350 and player.playing
-    np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), 1)
+    assert player.sink is sink and not sink.disposed and player.position == 350 and player.playing
+    np.testing.assert_allclose(np.frombuffer(sink.writes, dtype=np.float32)[queued // 4:], 1)
+    queued = len(sink.writes)
     player.select_stems([])
     assert player.playing and player.available == 1000 and player.position == 350
-    np.testing.assert_array_equal(np.frombuffer(player.sink.writes, dtype=np.float32), 0)
-    player.sink.processed = 100000
+    np.testing.assert_array_equal(np.frombuffer(sink.writes, dtype=np.float32)[queued // 4:], 0)
+    sink.processed = (queued // 8 + 100) * 1000
     player.tick()
     assert player.position == 450
     player.pause()
@@ -192,16 +195,17 @@ def test_all_stems_play_mixture_and_subsets_sum_only_selected_stems(player):
     assert player.playback_sources == (MIXTURE_KEY,)
     assert player.available == 1000
     player.seek_time(0)
-    np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), .8)
+    sink = player.sink
+    np.testing.assert_allclose(np.frombuffer(sink.writes, dtype=np.float32), .8)
     player.append("vocals", 0, np.full((2, 600), 2, dtype=np.float32))
     player.append("drums", 0, np.full((2, 400), -1.5, dtype=np.float32))
     player.select_stems(["vocals", "drums"])
     assert player.playback_sources == ("vocals", "drums")
     assert player.available == 400
-    np.testing.assert_allclose(np.frombuffer(player.sink.writes, dtype=np.float32), .5)
+    np.testing.assert_allclose(np.frombuffer(sink.writes, dtype=np.float32)[2000:], .5)
     player.select_stems([])
     assert player.playback_sources == ()
-    np.testing.assert_array_equal(np.frombuffer(player.sink.writes, dtype=np.float32), 0)
+    np.testing.assert_array_equal(np.frombuffer(sink.writes, dtype=np.float32)[2800:], 0)
 
 
 def test_disk_backed_random_reads_preserve_float32():
@@ -305,3 +309,82 @@ def test_partial_unaligned_writes_preserve_pcm(player, monkeypatch):
         player.tick()
     assert len(player.sink.writes) == 8000
     np.testing.assert_array_equal(np.frombuffer(player.sink.writes, np.float32), .25)
+
+
+def test_seek_and_stem_switch_while_playing_never_reset_the_sink(player):
+    player.lookahead = StemPlayer.lookahead
+    player.seek("vocals", .1)
+    sink = player.sink
+    player.seek_time(.4)
+    player.select_stems(["drums"])
+    player.select_stems([])
+    player.seek("vocals", .7)
+    assert player.sink is sink and not sink.disposed and player.playing
+    assert player.position == 700
+
+
+def test_stale_audio_is_bounded_by_lookahead(player):
+    player.lookahead = StemPlayer.lookahead
+    player.seek("vocals", 0)
+    sink = player.sink
+    assert len(sink.writes) == 60 * 8
+    player.tick()
+    assert len(sink.writes) == 60 * 8
+    sink.processed = 30000
+    player.tick()
+    assert len(sink.writes) == 90 * 8
+    sink.processed = 90000
+    player.seek("drums", .5)
+    stale = len(sink.writes)
+    assert stale == 150 * 8 or stale == 90 * 8 + 60 * 8
+    assert len(sink.writes) - 90000 // 1000 * 8 <= 60 * 8
+    sink.processed = 150000
+    player.tick()
+    np.testing.assert_array_equal(np.frombuffer(sink.writes, dtype=np.float32)[150 * 2:], -.5)
+
+
+def test_position_holds_at_target_until_stale_audio_has_played(player):
+    player.lookahead = StemPlayer.lookahead
+    player.seek("vocals", 0)
+    sink = player.sink
+    sink.processed = 40000
+    base = len(sink.writes) // 8
+    player.seek_time(.6)
+    assert player.position == 600
+    sink.processed = (base - 10) * 1000
+    player.tick()
+    assert player.position == 600
+    sink.processed = (base + 25) * 1000
+    player.tick()
+    assert player.position == 625
+    player.pause()
+    assert player.position == 625
+
+
+def test_retarget_completes_a_partially_written_frame_first(player, monkeypatch):
+    original_write = FakeSink.write
+    monkeypatch.setattr(FakeSink, "write", lambda sink, data: original_write(sink, data[:317]))
+    player.seek("vocals", 0)
+    sink = player.sink
+    player.tick()
+    assert len(sink.writes) % 8 != 0
+    player.select_stems(["drums"])
+    for step in range(10):
+        player.tick()
+    audio = np.frombuffer(bytes(sink.writes[:len(sink.writes) // 4 * 4]), dtype=np.float32)
+    first_new = np.argmax(audio < 0)
+    assert first_new % 2 == 0
+    assert np.all(audio[:first_new] == .25) and np.all(audio[first_new:] == -.5)
+
+
+def test_stem_change_while_paused_defers_the_sink_reset_to_resume(player):
+    player.seek("vocals", .2)
+    sink = player.sink
+    sink.processed = 50000
+    player.pause()
+    player.select_stems(["drums"])
+    assert not sink.disposed and not player.playing and player.position == 250
+    player.resume()
+    assert sink.disposed and player.playing and player.sink is not sink
+    assert np.frombuffer(player.sink.writes, dtype=np.float32)[0] == -.5
+    assert player.position == 250

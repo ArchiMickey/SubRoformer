@@ -30,6 +30,7 @@ from app.progress import estimate_remaining, format_duration
 from app.help import HelpDialog
 
 
+DEFAULT_MIXTURE = Path(__file__).resolve().parent.parent / "demo" / "test.wav"
 PLAYBACK_KEYS = (MIXTURE_KEY, "vocals", "bass", "drums", "other")
 PLAYBACK_COLORS = {
     MIXTURE_KEY: "#c6a0f6",
@@ -367,6 +368,8 @@ class MainWindow(QMainWindow):
         form.setContentsMargins(0, 24, 0, 12)
         form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
         self.input = self.path_field(form, "01  Mixture", "Choose or drop an audio file…", "audio")
+        if DEFAULT_MIXTURE.is_file():
+            self.input.setText(str(DEFAULT_MIXTURE))
         self.output = self.path_field(form, "02  Export folder", "Choose folder…", "directory")
         self.output.setText(str(Path.home() / "Music" / "SubStemStudio"))
         self.backend = QComboBox()
