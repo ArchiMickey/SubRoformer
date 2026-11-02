@@ -45,7 +45,7 @@ def test_inference_import_does_not_load_evaluation_dependencies():
     result = subprocess.run(
         [sys.executable, "-c",
          "import sys; import subroformer.inference.engine; "
-         "assert all(name not in sys.modules for name in ('subroformer.training.evaluate', 'museval', 'accelerate'))"],
+         "assert all(name not in sys.modules for name in ('subroformer.evaluate', 'museval', 'accelerate'))"],
         capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, result.stderr

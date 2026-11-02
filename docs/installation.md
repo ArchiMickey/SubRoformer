@@ -27,7 +27,7 @@ responsibilities, and the [config guide](../subroformer/configs/README.md) for
 installed YAML resources and inheritance.
 
 Use `python -m subroformer.training.train`,
-`python -m subroformer.training.evaluate`, and `python -m subroformer.inference` for the
+`python -m subroformer.evaluate`, and `python -m subroformer.inference` for the
 CLI tools. Old top-level imports and script paths have been removed.
 `python -m app` remains the source desktop launcher.
 

@@ -8,7 +8,7 @@ from accelerate import Accelerator
 from omegaconf import OmegaConf
 
 
-from subroformer.training import evaluate
+from subroformer import evaluate
 
 
 def fake_evaluate_songs(
@@ -20,8 +20,9 @@ def fake_evaluate_songs(
     amp_dtype=None,
     split=None,
     process_index=None,
+    executor=None,
 ):
-    del model, batch_size, amp_dtype, process_index
+    del model, batch_size, amp_dtype, process_index, executor
     rows = [
         {"song": song.name, "sdr": float(song.name.removeprefix("song_"))}
         for song in songs

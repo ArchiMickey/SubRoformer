@@ -5,10 +5,11 @@ import soundfile as sf
 import torch
 from omegaconf import OmegaConf
 
-from subroformer.training import evaluate
-from subroformer.training.evaluate import (
+from subroformer import evaluate
+from subroformer.evaluate import (
     evaluate_songs,
     evaluate_songs_distributed,
+    evaluate_subsets,
     extract_model_state,
     normalize_model_output,
     order_distributed_rows,
@@ -337,3 +338,64 @@ def test_in_training_eval_metrics_include_each_stem_and_stem_average():
         "eval/test/drums_sdr": 4.0,
         "eval/test/other_sdr": 3.0,
     }
+
+
+class _ScaledSeparator(torch.nn.Module):
+    """Returns the mixture scaled once per stem, as a joint or single-stem separator."""
+
+    def __init__(self, stems_num=None):
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.ones(()))
+        self.stems_num = stems_num
+
+    def forward(self, audio):
+        if self.stems_num is None:
+            return 0.4 * audio
+        scales = torch.linspace(0.1, 0.4, self.stems_num, device=audio.device)
+        return audio[:, None] * scales[:, None, None]
+
+
+def _write_songs(root: Path, stems, split, songs=2, samples=44_100):
+    rng = np.random.default_rng(0)
+    for index in range(songs):
+        song = root / split / f"song_{index}"
+        song.mkdir(parents=True)
+        for stem in stems:
+            audio = 0.1 * rng.standard_normal((samples, 2)).astype(np.float32)
+            sf.write(song / f"{stem}.wav", audio, 44_100, subtype="FLOAT")
+
+
+def test_pooled_subset_scoring_matches_inline_scoring(tmp_path):
+    stems = ["vocals", "bass", "drums", "other"]
+    _write_songs(tmp_path, stems, "train")
+    _write_songs(tmp_path, stems, "test")
+    for target_stem, model in (("vocals", _ScaledSeparator()), (None, _ScaledSeparator(len(stems)))):
+        config = OmegaConf.create({
+            "audio": {"sample_rate": 44_100, "chunk_size": 22_050},
+            "training": {"target_instrument": target_stem, "instruments": stems},
+        })
+        kwargs = dict(
+            config=config, model=model, root=tmp_path, splits=("train", "test"),
+            audios_num=2, hop_ratio=1, batch_size=2,
+        )
+        model.train()
+
+        inline = evaluate_subsets(scoring_workers=0, **kwargs)
+        pooled = evaluate_subsets(scoring_workers=2, **kwargs)
+
+        assert pooled == inline
+        assert set(inline) == {"train", "test"}
+        assert [row["song"] for row in inline["test"]["results"]] == ["song_0", "song_1"]
+        assert model.training
+
+
+def test_joint_summary_reports_mean_and_median_of_stem_medians():
+    config = OmegaConf.create({"training": {"target_instrument": None, "instruments": ["vocals", "bass", "drums", "other"]}})
+    rows = [{"song": "song", "sdr": {"vocals": 1.0, "bass": 2.0, "drums": 3.0, "other": 10.0}}]
+    metrics = summarize_evaluation_rows(config, rows, hop_ratio=4)
+    assert metrics["median_sdr"] == 4.0
+    assert metrics["median_of_stem_medians_sdr"] == 2.5
+    table = evaluate.format_evaluation_table(metrics)
+    assert "vocals" in table and "10.0000 dB" in table
+    assert "Mean of stem medians" in table and "4.0000 dB" in table
+    assert "Median of stem medians" in table and "2.5000 dB" in table

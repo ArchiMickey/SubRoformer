@@ -79,6 +79,21 @@ def multiresolution_stft_l1(
     return torch.stack(losses).sum() if losses else output.new_zeros(())
 
 
+@torch.no_grad()
+def fast_sdr(output: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """Mean plain SDR in dB over every batch/stem/channel slice (no museval)."""
+    if output.shape != target.shape:
+        raise ValueError(f"output and target must have the same shape: {output.shape} != {target.shape}")
+    if output.ndim == 0:
+        raise ValueError("output and target must have a time dimension")
+    output = output.float()
+    target = target.float()
+    signal_energy = target.square().sum(dim=-1)
+    error_energy = (target - output).square().sum(dim=-1)
+    tiny = torch.finfo(output.dtype).tiny
+    return (10.0 * (torch.log10(signal_energy.clamp_min(tiny)) - torch.log10(error_energy.clamp_min(tiny)))).mean()
+
+
 def separation_loss(output: torch.Tensor, target: torch.Tensor, config) -> torch.Tensor:
     waveform = torch.nn.functional.l1_loss(output, target)
     loss_name = config.training.get("loss", "l1")
