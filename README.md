@@ -34,8 +34,8 @@ Use the released perceptually fine-tuned checkpoint (downloaded automatically if
 
 ```bash
 uv run python -m subroformer.inference \
-  --input demo/song.wav \
-  --output_dir outputs/song
+  --input demo/test.wav \
+  --output_dir outputs/test
 ```
 
 The CLI automatically selects **CUDA → MPS → CPU**, or specify `--device` manually. It outputs four 48 kHz WAV files: `vocals.wav`, `bass.wav`, `drums.wav`, and `other.wav`.
@@ -48,7 +48,7 @@ from subroformer.inference.engine import (
 )
 
 model, config = load_separator(device="auto")
-audio = load_audio("demo/song.wav", int(config.audio.sample_rate))
+audio = load_audio("demo/test.wav", int(config.audio.sample_rate))
 stems = separate_audio(
     model, audio, config,
     amp_dtype=resolve_amp_dtype(next(model.parameters()).device),
@@ -58,17 +58,13 @@ vocals = stems["vocals"]  # float32 NumPy array: [channels, samples]
 
 ### 2.3 SubStemStudio App
 
-Demo on [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI):
-
 <div align="center">
 
 https://github.com/user-attachments/assets/45b3fa51-0370-4635-a93b-738856479956
 
 </div>
 
-**SubStemStudio** provides a graphical interface for four-stem separation, real-time progress monitoring, synchronized spectrograms, playback controls, and 48 kHz WAV export.
-
-The app supports **macOS, Windows, and Linux**, using Core ML on macOS 15+ by default or PyTorch on CUDA, MPS, and CPU. See the [app guide](app/README.md).
+**SubStemStudio** provides a graphical interface for four-stem separation, real-time progress monitoring, synchronized spectrograms, playback controls, and 48 kHz WAV export. The app supports **macOS, Windows, and Linux**, using Core ML on macOS 15+ by default or PyTorch on CUDA, MPS, and CPU. See the [app guide](app/README.md). The demo song is [Netrum & Halvorsen - Phoenix](https://www.youtube.com/watch?v=yH88qRmgkGI):
 
 ## 3. Training
 
@@ -124,7 +120,7 @@ See the [training guide](subroformer/training/README.md) for multi-GPU training 
 uv run python -m subroformer.inference \
   --config subroformer/configs/sbroformer_base_4stem.yaml \
   --checkpoint checkpoints/my_run/model_ema.pt \
-  --input demo/song.wav \
+  --input demo/test.wav \
   --output_dir outputs/my_run
 ```
 
