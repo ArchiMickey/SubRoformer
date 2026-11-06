@@ -140,6 +140,20 @@ uv run python -m subroformer.inference \
 | Testing | [Testing Guide](docs/testing.md) |
 | Inference optimization | [Optimization Guide](docs/inference_optimization.md) |
 
+## Citation
+
+```bibtex
+@misc{wu2026subroformer,
+  title         = {SubRoformer: Subband Time-Domain Representation for Music Source Separation},
+  author        = {Wu, Chunyat and Ding, Chuang and Smaragdis, Paris and Kong, Qiuqiang},
+  year          = {2026},
+  eprint        = {2611.08130},
+  archivePrefix = {arXiv},
+  primaryClass  = {eess.AS},
+  url           = {https://arxiv.org/abs/2611.08130}
+}
+```
+
 ## Acknowledgments
 
 We thank **Roman Solovyev (ZFTurbo)** for [Music-Source-Separation-Training](https://github.com/ZFTurbo/Music-Source-Separation-Training), from which the dataset handling and DataLoader code are derived.
